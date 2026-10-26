@@ -649,6 +649,12 @@ const DIA_IND = [
   ["Agendamentos WhatsApp",            a => a.AGENDAMENTO_WHATS_NOVO, "int"],
   ["Agendamentos WhatsApp (%)",        a => div(a.AGENDAMENTO_WHATS_NOVO, a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO), "pct", "taxa"]
 ];
+/* ordem do funil (cascata) para a tabela "% Evolucao entre dois dias" */
+const EV_ORD = [["MAILING_DISPONIBILIZADO","Mailing disponibilizado"],["TELEFONES_MAILING","Telefones"],["TELEFONES_ENRIQUECIDOS","Telefones enriquecidos"],
+  ["DISCAGEM","Discagem"],["TRABALHADO_NOVO","Trabalhados (novos)"],["ATENDIDAS","Total alôs (atendidas)"],["ALO_NOVO","Alô / localizado (novos)"],
+  ["CONTATO_EFETIVO_NOVO","Contato efetivo"],["CPC_NOVO","Tabulações finalizadoras"],["VENDAS_NOVO","Vendas mailing"],["VENDAS_INDICACAO","Vendas indicação"],
+  ["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["EM_NEGOCIACAO_NOVO","Potencial de trabalho (frio)"],["AGEND","Agendamentos (voz + WhatsApp)"],
+  ["AGENDAMENTO_WHATS_NOVO","Agendamentos WhatsApp"]];
 const IND_G = [["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["VENDAS_NOVO","Vendas mailing"],["VENDAS_INDICACAO","Vendas indicação"],["ATENDIDAS","Total alôs (atendidas)"],["ALO_NOVO","Alô / localizado (novos)"],["CONTATO_EFETIVO_NOVO","Contato efetivo"],
   ["CPC_NOVO","Tabulações finalizadoras"],["TRABALHADO_NOVO","Trabalhados (novos)"],["DISCAGEM","Discagem"],["EM_NEGOCIACAO_NOVO","Potencial de trabalho (frio)"],
   ["AGEND","Agendamentos (voz + WhatsApp)"],["AGENDAMENTO_WHATS_NOVO","Agendamentos WhatsApp"],["MAILING_DISPONIBILIZADO","Mailing disponibilizado"]];
@@ -690,10 +696,10 @@ function renderDia(){
   const aDe = acum.get(S.evDe), aAte = acum.get(S.evAte);
   h += '<div class="card"><h2>% Evolução entre dois dias</h2><div class="evRow"><span class="hint">De</span><select class="sel" id="selEvDe">' + optD(S.evDe) + '</select><span class="hint">até</span><select class="sel" id="selEvAte">' + optD(S.evAte) + '</select></div>'
     + '<div class="tscroll"><table class="x"><thead><tr><th>Indicador</th><th class="num">' + lbl(S.evDe) + '</th><th class="num">' + lbl(S.evAte) + '</th><th class="num">Evolução %</th><th class="num">Diferença</th></tr></thead><tbody>'
-    + IND_G.map(([k, n]) => { const v1 = valInd(aDe, k), v2 = valInd(aAte, k), ev = div(v2, v1) - 1, df = v2 - v1;
+    + EV_ORD.map(([k, n]) => { const v1 = valInd(aDe, k), v2 = valInd(aAte, k), ev = div(v2, v1) - 1, df = v2 - v1;
         return '<tr><td class="name">' + esc(n) + '</td><td class="num">' + fInt(v1) + '</td><td class="num">' + fInt(v2) + '</td><td class="num pctcol ' + (isFinite(ev) ? (ev >= 0 ? "good" : "bad") : "") + '">' + (isFinite(ev) ? (ev > 0 ? "+" : "") + fPct(ev) : "–")
           + '</td><td class="num">' + (df > 0 ? "+" : "") + fInt(df) + '</td></tr>'; }).join("")
-    + '</tbody></table></div><p class="hint" style="margin:6px 0 0">Valores acumulados em cada data.</p></div>';
+    + '</tbody></table></div><p class="hint" style="margin:6px 0 0">Valores acumulados em cada data, na ordem do funil (do mailing até a venda).</p></div>';
 
   /* tabela no formato do funil: indicadores x dias */
   h += '<div class="card"><h2>Indicadores por dia</h2><div class="tscroll"><table class="x funil dia2"><thead><tr><th class="stick">Indicador</th>'
@@ -768,11 +774,17 @@ function renderProj(){
     let h = '<div class="card"><h2>' + esc(titulo) + '</h2><div class="tscroll"><table class="x proj"><thead><tr class="grp"><th></th><th></th><th colspan="4" class="g-real sepl">Acumulado até ' + esc(fDia(corte)) + '</th><th colspan="4" class="g-proj sepl">Fechamento do mês</th></tr>'
       + '<tr><th>Indicador</th><th class="num">Meta do mês</th><th class="num sepl">Meta acumulada</th><th class="num">Realizado acumulado</th><th class="num">Gap acumulado</th><th class="num">% atingido</th>'
       + '<th class="num sepl">Projeção</th><th class="num">% da meta</th><th class="num">Gap projetado</th><th class="num">Necessário/dia</th></tr></thead><tbody>';
-    IND.forEach(([n, k, f, t, lin]) => { h += linha(n + (lin ? "" : " *"), v[k], lin ? p[k] : v[k], m[k], t, lin, k); });
     const tx = (nome, num, den, numP, denP, mNum, mDen, t) => linha(nome, div(num, den), div(numP, denP), div(mNum, mDen), t, false, null);
-    p.volume = isFinite(m.volume) && m.volume > 0 ? m.volume : v.volume;   /* volume esperado no mes = meta */
-    h += tx("Penetração (localizado ÷ volume)", v.localizado, v.volume, p.localizado, p.volume, m.localizado, m.volume, "pct");
-    h += tx("Taxa alô (total alôs ÷ localizado)", v.alos, v.localizado, p.alos, p.localizado, m.alos, m.localizado, "dec2");
+    const pVol = isFinite(m.volume) && m.volume > 0 ? m.volume : v.volume;   /* volume esperado no mes = meta */
+    /* ordem: volume, localizado, total alos -> penetracao e taxa alo -> vendas -> conversao e retorno */
+    IND.forEach(([n, k, f, t, lin]) => {
+      h += linha(n + (lin ? "" : " *"), v[k], lin ? p[k] : v[k], m[k], t, lin, k);
+      if (k === "alos"){
+        h += tx("Penetração (localizado ÷ volume)", v.localizado, v.volume, p.localizado, pVol, m.localizado, m.volume, "pct");
+        h += tx("Taxa alô (total alôs ÷ localizado)", v.alos, v.localizado, p.alos, p.localizado, m.alos, m.localizado, "dec2");
+      }
+    });
+    p.volume = pVol;
     h += tx("Conversão alô (vendas ÷ total alôs)", v.vendas, v.alos, p.vendas, p.alos, m.vendas, m.alos, "pct2");
     h += tx("Retorno (vendas ÷ volume)", v.vendas, v.volume, p.vendas, p.volume, m.vendas, m.volume, "pct2");
     return h + '</tbody></table></div></div>';
