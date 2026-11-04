@@ -426,7 +426,7 @@ async function readFile(file){
 
 /* ---------- dados ---------- */
 const NUMS = ["MAILING_DISPONIBILIZADO","TELEFONES_MAILING","TELEFONES_BLOQUEADOS","DISCAGEM","TRABALHADO_NOVO","TRABALHADO_TOTAL",
-  "ATENDIDAS","ALO_NOVO","ALO_TOTAL","CONTATO_EFETIVO_NOVO","CPC_NOVO","VENDAS_NOVO","EM_NEGOCIACAO_NOVO","AGENDAMENTO_NOVO","AGENDAMENTO_WHATS_NOVO","VENDAS_INDICACAO","TELEFONES_ENRIQUECIDOS","TEL_NAO_PERTENCE"];
+  "ATENDIDAS","ALO_NOVO","ALO_TOTAL","CONTATO_EFETIVO_NOVO","CPC_NOVO","VENDAS_NOVO","EM_NEGOCIACAO_NOVO","AGENDAMENTO_NOVO","AGENDAMENTO_WHATS_NOVO","VENDAS_INDICACAO","TELEFONES_ENRIQUECIDOS","TEL_NAO_PERTENCE","DISCAGEM_COMPLETADA"];
 const PERFIS = ["CORRENTISTA","NAO CORRENTISTA"];
 const PNOME = { "CORRENTISTA":"Correntista", "NAO CORRENTISTA":"Não correntista" };
 const META_PADRAO = {
@@ -467,6 +467,8 @@ function encode(rows){
 }
 const encLen = enc => enc.n != null ? enc.n : (enc.rows ? enc.rows.length : 0);
 function load(enc, meta){
+  /* bases antigas (sem colunas novas, ex. DISCAGEM_COMPLETADA) entram com 0 */
+  (enc.rows || []).forEach(r => NUMS.forEach(n => { if (r[n] == null || isNaN(r[n])) r[n] = 0; }));
   S.rows = enc.rows; S.meta = meta || S.meta;
   S.safras = Array.from(new Set(S.rows.map(r => r.SAFRA).filter(Boolean))).sort();
   S.meses = Array.from(new Set(S.rows.map(r => mesDe(r.DATA)))).sort();
@@ -480,7 +482,7 @@ function renderMeta(){
   const m = S.meta;
   const when = m && m.updatedAt ? new Date(m.updatedAt).toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }) : null;
   $("#meta").innerHTML = (when ? "Atualizado em <b>" + esc(when) + "</b><br>" : "<b>Somente nesta tela</b><br>")
-    + "Dados até " + esc(fDiaAno(S.corte)) + " · safras " + esc(S.safras.map(fDia).join(", ")) + (m && m.fileName ? "<br>" + esc(m.fileName) : "");
+    + "Dados até " + esc(fDiaAno(S.corte)) + " · safras " + esc(S.safras.map(fDia).join(", ")) + (m && m.fileName ? "<br>" + esc(m.fileName) : "") + (logged ? '<br><span style="opacity:.75">Atualização automática ligada</span>' : "");
 }
 function sum(rows){ const a = {}; NUMS.forEach(n => a[n] = 0); rows.forEach(r => NUMS.forEach(n => a[n] += r[n])); return a; }
 
@@ -690,7 +692,7 @@ function renderDia(){
     + '<label class="hint">Indicador <select class="sel" id="selInd">' + IND_G.map(([k, n]) => '<option value="' + k + '"' + (k === S.ind ? " selected" : "") + '>' + esc(n) + '</option>').join("") + '</select></label></div>'
     + '<div class="chartbox"><canvas id="chDia" role="img" aria-label="' + esc(indNome) + ': valor do dia e acumulado"></canvas></div>'
     + '<div class="ateRow"><span class="hint">Acumulado até</span><input type="range" id="rgAte" min="0" max="' + (dias.length - 1) + '" value="' + iAte + '" aria-label="Acumulado até"><b id="lbAte">' + lbl(S.ate) + '</b></div>'
-    + '<p class="hint" style="margin:4px 0 0">Barras = valor do dia; linha = acumulado (fecha com o funil). O "acumulado até" corta o gráfico, a tabela e o total.</p></div>';
+    + '<p class="hint" style="margin:4px 0 0">Barras = valor do dia (na discagem: completadas em amarelo e não completadas em cinza); linha = acumulado (fecha com o funil). O "acumulado até" corta o gráfico, a tabela e o total.</p></div>';
 
   /* evolucao entre dois dias (acumulados) */
   const aDe = acum.get(S.evDe), aAte = acum.get(S.evAte);
@@ -715,14 +717,25 @@ function renderDia(){
   $("#v_dia").innerHTML = h;
 
   const ink = cssv("--muted") || "#666", grid = cssv("--line") || "#ddd";
+  const ehDisc = S.ind === "DISCAGEM";
   charts.push(new Chart($("#chDia"), {
-    data:{ labels:vis.map(lbl), datasets:[
-      { type:"bar", label:indNome + " (dia)", data:vis.map(d => valInd(porDia.get(d), S.ind)), backgroundColor:cssv("--amber") || "#E0A800", yAxisID:"y", order:2 },
-      { type:"line", label:indNome + " (acumulado)", data:vis.map(d => valInd(acum.get(d), S.ind)), borderColor:cssv("--ink") || "#222", backgroundColor:"transparent", pointRadius:2.5, tension:.2, yAxisID:"y2", order:1 } ] },
+    data:{ labels:vis.map(lbl), datasets: (ehDisc ? [
+      /* discagem: barra empilhada, completadas embaixo (destaque) e nao completadas em cima */
+      { type:"bar", label:"Completadas", data:vis.map(d => porDia.get(d).DISCAGEM_COMPLETADA), backgroundColor:cssv("--amber") || "#E0A800", yAxisID:"y", stack:"disc", order:2 },
+      { type:"bar", label:"Não completadas", data:vis.map(d => Math.max(0, porDia.get(d).DISCAGEM - porDia.get(d).DISCAGEM_COMPLETADA)), backgroundColor:"#D4D4D4", yAxisID:"y", stack:"disc", order:3 }
+    ] : [
+      { type:"bar", label:indNome + " (dia)", data:vis.map(d => valInd(porDia.get(d), S.ind)), backgroundColor:cssv("--amber") || "#E0A800", yAxisID:"y", order:2 }
+    ]).concat([
+      { type:"line", label:indNome + " (acumulado)", data:vis.map(d => valInd(acum.get(d), S.ind)), borderColor:cssv("--ink") || "#222", backgroundColor:"transparent", pointRadius:2.5, tension:.2, yAxisID:"y2", order:1 } ]) },
     options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
-      plugins:{ legend:{ labels:{ color:ink } } },
-      scales:{ x:{ ticks:{ color:ink, maxRotation:45, minRotation:45 }, grid:{ display:false } },
-               y:{ position:"left", title:{ display:true, text:"Dia", color:ink }, ticks:{ color:ink }, grid:{ color:grid } },
+      plugins:{ legend:{ labels:{ color:ink } },
+        tooltip:{ callbacks:{
+          label: c => " " + c.dataset.label + ": " + fInt(c.parsed.y),
+          footer: items => { if (!ehDisc || !items.length) return "";
+            const a = porDia.get(vis[items[0].dataIndex]);
+            return "Discagem do dia: " + fInt(a.DISCAGEM) + "\nCompletadas: " + fPct(div(a.DISCAGEM_COMPLETADA, a.DISCAGEM)); } } } },
+      scales:{ x:{ stacked:ehDisc, ticks:{ color:ink, maxRotation:45, minRotation:45 }, grid:{ display:false } },
+               y:{ stacked:ehDisc, position:"left", title:{ display:true, text:"Dia", color:ink }, ticks:{ color:ink }, grid:{ color:grid } },
                y2:{ position:"right", title:{ display:true, text:"Acumulado", color:ink }, ticks:{ color:ink }, grid:{ display:false } } } }
   }));
   $("#selInd").onchange = e => { S.ind = e.target.value; renderDia(); };
@@ -1002,7 +1015,7 @@ async function syncBase(silent){
   const { data } = await sb.auth.getSession();
   await aoLogar(data && data.session);
   /* atualizacao automatica: a cada 2 min e quando a aba volta a ficar visivel */
-  setInterval(() => { if (logged && document.visibilityState === "visible") syncBase(true); }, 2 * 60 * 1000);
+  setInterval(() => { if (logged && document.visibilityState === "visible") syncBase(true); }, 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (logged && document.visibilityState === "visible") syncBase(true); });
 })();
 })();
