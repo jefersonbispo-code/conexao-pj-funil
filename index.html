@@ -426,7 +426,7 @@ async function readFile(file){
 
 /* ---------- dados ---------- */
 const NUMS = ["MAILING_DISPONIBILIZADO","TELEFONES_MAILING","TELEFONES_BLOQUEADOS","DISCAGEM","TRABALHADO_NOVO","TRABALHADO_TOTAL",
-  "ATENDIDAS","ALO_NOVO","ALO_TOTAL","CONTATO_EFETIVO_NOVO","CPC_NOVO","VENDAS_NOVO","EM_NEGOCIACAO_NOVO","AGENDAMENTO_NOVO","AGENDAMENTO_WHATS_NOVO","VENDAS_INDICACAO","TELEFONES_ENRIQUECIDOS","TEL_NAO_PERTENCE","DISCAGEM_COMPLETADA"];
+  "ATENDIDAS","ALO_NOVO","ALO_TOTAL","CONTATO_EFETIVO_NOVO","CPC_NOVO","VENDAS_NOVO","EM_NEGOCIACAO_NOVO","AGENDAMENTO_NOVO","AGENDAMENTO_WHATS_NOVO","VENDAS_INDICACAO","TELEFONES_ENRIQUECIDOS","TEL_NAO_PERTENCE","DISCAGEM_COMPLETADA","ERRO_APP_NOVO","VENDAS_VCLI","VENDAS_VCLI_FORA","VENDAS_LOCALIZADAS","INDICACAO_LOCALIZADA"];
 const PERFIS = ["CORRENTISTA","NAO CORRENTISTA"];
 const PNOME = { "CORRENTISTA":"Correntista", "NAO CORRENTISTA":"Não correntista" };
 const META_PADRAO = {
@@ -460,13 +460,17 @@ function encode(rows){
     let p = clean(r[km.PERFIL]).toUpperCase().replace("NÃO", "NAO");
     const o = { DATA:d, SAFRA:s, PERFIL:p };
     NUMS.forEach(n => o[n] = km[n] ? num(r[km[n]]) : 0);
-    if (!s && !o.VENDAS_INDICACAO) continue;   /* linha sem safra so vale para venda de indicacao */
+    if (!s && !o.VENDAS_INDICACAO && !o.VENDAS_VCLI_FORA && !o.INDICACAO_LOCALIZADA) continue;   /* linha sem safra: indicacao ou Visao Cliente fora do mailing */
     out.push(o);
   }
-  return { v:"diadia", n:out.length, rows:out };
+  return { v:"diadia", n:out.length, rows:out, erroApp:!!km.ERRO_APP_NOVO, vcli:!!km.VENDAS_VCLI, loc:!!km.VENDAS_LOCALIZADAS };
 }
 const encLen = enc => enc.n != null ? enc.n : (enc.rows ? enc.rows.length : 0);
+/* potencial frio: com a query V5.5 do agente (coluna ERRO_APP_NOVO) = agendamentos (voz + WhatsApp) + erro no aplicativo;
+   bases anteriores usam a coluna EM_NEGOCIACAO_NOVO */
+const frio = a => S.erroApp ? a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO + a.ERRO_APP_NOVO : a.EM_NEGOCIACAO_NOVO;
 function load(enc, meta){
+  S.erroApp = !!enc.erroApp; S.vcli = !!enc.vcli; S.loc = !!enc.loc;
   /* bases antigas (sem colunas novas, ex. DISCAGEM_COMPLETADA) entram com 0 */
   (enc.rows || []).forEach(r => NUMS.forEach(n => { if (r[n] == null || isNaN(r[n])) r[n] = 0; }));
   S.rows = enc.rows; S.meta = meta || S.meta;
@@ -571,11 +575,20 @@ const FUNIL = [
   ["Vendas mailing",                  a => a.VENDAS_NOVO, "int"],
   ["Vendas indicação",                a => a.VENDAS_INDICACAO, "int", "indic"],
   ["Vendas total",                    a => a.VENDAS_NOVO + a.VENDAS_INDICACAO, "int", "destaque"],
+  ["Contas abertas (Visão Cliente)",  a => a.VENDAS_VCLI, "int", "vcli"],
+  ["Contas abertas fora do mailing (Visão Cliente)", a => a.VENDAS_VCLI_FORA, "int", "vcliind"],
+  ["Contas abertas total (Visão Cliente)", a => a.VENDAS_VCLI + a.VENDAS_VCLI_FORA, "int", "vclitot destaque"],
+  ["Contas abertas (localizadas)",    a => a.VENDAS_LOCALIZADAS, "int", "loc"],
+  ["Contas abertas após tabulação (%)", a => div(a.VENDAS_LOCALIZADAS, a.VENDAS_NOVO), "pct", "loc"],
+  ["Contas abertas sem venda tabulada", a => Math.max(0, a.VENDAS_VCLI - a.VENDAS_LOCALIZADAS), "int", "loc"],
+  ["Indicações com conta aberta",     a => a.INDICACAO_LOCALIZADA, "int", "locind"],
+  ["Indicações com conta aberta (%)", a => div(a.INDICACAO_LOCALIZADA, a.VENDAS_INDICACAO), "pct", "locind"],
   ["Conversão/Mailing",               a => div(a.VENDAS_NOVO, a.MAILING_DISPONIBILIZADO), "pct2"],
   ["Conversão/Tab. Finalizadoras",    a => div(a.VENDAS_NOVO, a.CPC_NOVO), "pct2"],
   ["Conversão/Contato Efetivo",       a => div(a.VENDAS_NOVO, a.CONTATO_EFETIVO_NOVO), "pct2"],
-  ["Potencial de trabalho (frio)",    a => a.EM_NEGOCIACAO_NOVO, "int"],
+  ["Potencial de trabalho (frio)",    a => frio(a), "int"],
   ["Agendamentos (Voz + WhatsApp)",   a => a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO, "int"],
+  ["Erro no aplicativo / selfie",     a => a.ERRO_APP_NOVO, "int", "erroapp"],
   ["Agendamentos WhatsApp",           a => a.AGENDAMENTO_WHATS_NOVO, "int"],
   ["Agendamentos WhatsApp (%)",       a => div(a.AGENDAMENTO_WHATS_NOVO, a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO), "pct"]
 ];
@@ -605,8 +618,9 @@ function renderFunil(){
     + grupos.map(g => g.cols.map((c, i) => '<th class="num' + (i === 0 ? " sepl" : "") + (c.tot ? " tot" : "") + '">' + esc(c.t)
         + (c.s ? '<span class="st ' + (safraAtiva(c.s) ? 'on">ativa até ' : 'off">encerrada em ') + fDiaAno(fimSafra(c.s)).slice(0, 5) + '</span>' : '') + '</th>').join("")).join("") + '<th class="num sepl tot">Total</th></tr></thead><tbody>';
   FUNIL.forEach(([nome, f, t, cl]) => {
+    if (cl && ((cl.indexOf("vcli") === 0 && !S.vcli) || (cl === "erroapp" && !S.erroApp) || (cl.indexOf("loc") === 0 && !S.loc))) return;   /* linha so com a query que traz a coluna */
     h += '<tr class="' + (t.indexOf("pct") === 0 || t.indexOf("dec") === 0 ? "taxa" : "") + (t.indexOf("pct") === 0 ? " pctrow" : "") + (cl ? " " + cl : "") + '"><td class="name">' + esc(nome) + '</td>'
-      + grupos.map(g => g.cols.map((c, i) => '<td class="num' + (i === 0 ? " sepl" : "") + (c.tot ? " tot" : "") + '">' + (cl === "indic" && !c.tot ? "–" : fmt(f(c.a), t)) + '</td>').join("")).join("")
+      + grupos.map(g => g.cols.map((c, i) => '<td class="num' + (i === 0 ? " sepl" : "") + (c.tot ? " tot" : "") + '">' + ((cl === "indic" || cl === "vcliind" || cl === "locind") && !c.tot ? "–" : fmt(f(c.a), t)) + '</td>').join("")).join("")
       + '<td class="num sepl tot">' + fmt(f(geral), t) + '</td></tr>';
   });
   if (!sfs.length) h = h.replace('<tbody>', '<tbody><tr><td class="name" colspan="99">Nenhuma safra nessa situação.</td></tr>');
@@ -643,10 +657,13 @@ const DIA_IND = [
   ["Vendas mailing",                   a => a.VENDAS_NOVO, "int"],
   ["Vendas indicação",                 a => a.VENDAS_INDICACAO, "int"],
   ["Vendas total",                     a => a.VENDAS_NOVO + a.VENDAS_INDICACAO, "int", "destaque"],
+  ["Contas abertas (Visão Cliente)",   a => a.VENDAS_VCLI + a.VENDAS_VCLI_FORA, "int", "vcli"],
+  ["Contas abertas (localizadas)",     a => a.VENDAS_LOCALIZADAS, "int", "loc"],
+  ["Contas abertas após tabulação (%)", a => div(a.VENDAS_LOCALIZADAS, a.VENDAS_NOVO), "pct", "loc"],
   ["Conversão/Total alôs",             a => div(a.VENDAS_NOVO, a.ATENDIDAS), "pct2", "taxa"],
   ["Conversão/Contato Efetivo",        a => div(a.VENDAS_NOVO, a.CONTATO_EFETIVO_NOVO), "pct2", "taxa"],
   ["Conversão/Tab. Finalizadoras",     a => div(a.VENDAS_NOVO, a.CPC_NOVO), "pct2", "taxa"],
-  ["Potencial de trabalho (frio)",     a => a.EM_NEGOCIACAO_NOVO, "int"],
+  ["Potencial de trabalho (frio)",     a => frio(a), "int"],
   ["Agendamentos (Voz + WhatsApp)",    a => a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO, "int"],
   ["Agendamentos WhatsApp",            a => a.AGENDAMENTO_WHATS_NOVO, "int"],
   ["Agendamentos WhatsApp (%)",        a => div(a.AGENDAMENTO_WHATS_NOVO, a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO), "pct", "taxa"]
@@ -655,12 +672,13 @@ const DIA_IND = [
 const EV_ORD = [["MAILING_DISPONIBILIZADO","Mailing disponibilizado"],["TELEFONES_MAILING","Telefones"],["TELEFONES_ENRIQUECIDOS","Telefones enriquecidos"],
   ["DISCAGEM","Discagem"],["TRABALHADO_NOVO","Trabalhados (novos)"],["ATENDIDAS","Total alôs (atendidas)"],["ALO_NOVO","Alô / localizado (novos)"],
   ["CONTATO_EFETIVO_NOVO","Contato efetivo"],["CPC_NOVO","Tabulações finalizadoras"],["VENDAS_NOVO","Vendas mailing"],["VENDAS_INDICACAO","Vendas indicação"],
-  ["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["EM_NEGOCIACAO_NOVO","Potencial de trabalho (frio)"],["AGEND","Agendamentos (voz + WhatsApp)"],
+  ["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["VCLI_TOTAL","Contas abertas (Visão Cliente)"],["EM_NEGOCIACAO_NOVO","Potencial de trabalho (frio)"],["AGEND","Agendamentos (voz + WhatsApp)"],
   ["AGENDAMENTO_WHATS_NOVO","Agendamentos WhatsApp"]];
-const IND_G = [["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["VENDAS_NOVO","Vendas mailing"],["VENDAS_INDICACAO","Vendas indicação"],["ATENDIDAS","Total alôs (atendidas)"],["ALO_NOVO","Alô / localizado (novos)"],["CONTATO_EFETIVO_NOVO","Contato efetivo"],
+const IND_G = [["VENDAS_TOTAL","Vendas total (mailing + indicação)"],["VCLI_TOTAL","Contas abertas (Visão Cliente)"],["VENDAS_NOVO","Vendas mailing"],["VENDAS_INDICACAO","Vendas indicação"],["ATENDIDAS","Total alôs (atendidas)"],["ALO_NOVO","Alô / localizado (novos)"],["CONTATO_EFETIVO_NOVO","Contato efetivo"],
   ["CPC_NOVO","Tabulações finalizadoras"],["TRABALHADO_NOVO","Trabalhados (novos)"],["DISCAGEM","Discagem"],["EM_NEGOCIACAO_NOVO","Potencial de trabalho (frio)"],
   ["AGEND","Agendamentos (voz + WhatsApp)"],["AGENDAMENTO_WHATS_NOVO","Agendamentos WhatsApp"],["MAILING_DISPONIBILIZADO","Mailing disponibilizado"]];
-const valInd = (a, k) => k === "AGEND" ? a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO : k === "VENDAS_TOTAL" ? a.VENDAS_NOVO + a.VENDAS_INDICACAO : a[k];
+const valInd = (a, k) => k === "AGEND" ? a.AGENDAMENTO_NOVO + a.AGENDAMENTO_WHATS_NOVO : k === "VENDAS_TOTAL" ? a.VENDAS_NOVO + a.VENDAS_INDICACAO
+  : k === "VCLI_TOTAL" ? a.VENDAS_VCLI + a.VENDAS_VCLI_FORA : k === "EM_NEGOCIACAO_NOVO" ? frio(a) : a[k];
 function renderDia(){
   charts.forEach(c => c.destroy()); charts = [];
   const rows = S.rows.filter(r => (!S.mes || mesDe(r.DATA) === S.mes) && (!S.perfil || r.PERFIL === S.perfil) && (!S.safra || r.SAFRA === S.safra));
@@ -689,7 +707,7 @@ function renderDia(){
 
   let h = '<div class="card"><div class="bar-head"><div><h2>Evolução dia a dia · ' + esc(S.mes ? fMesIso(S.mes) : "todo o período") + '</h2><p class="hint" style="margin:0">'
     + esc(S.perfil ? PNOME[S.perfil] : "Todos os perfis") + ' · ' + esc(S.safra ? "safra " + fDiaAno(S.safra) : "todas as safras") + '</p></div>'
-    + '<label class="hint">Indicador <select class="sel" id="selInd">' + IND_G.map(([k, n]) => '<option value="' + k + '"' + (k === S.ind ? " selected" : "") + '>' + esc(n) + '</option>').join("") + '</select></label></div>'
+    + '<label class="hint">Indicador <select class="sel" id="selInd">' + IND_G.filter(([k]) => k !== "VCLI_TOTAL" || S.vcli).map(([k, n]) => '<option value="' + k + '"' + (k === S.ind ? " selected" : "") + '>' + esc(n) + '</option>').join("") + '</select></label></div>'
     + '<div class="chartbox"><canvas id="chDia" role="img" aria-label="' + esc(indNome) + ': valor do dia e acumulado"></canvas></div>'
     + '<div class="ateRow"><span class="hint">Acumulado até</span><input type="range" id="rgAte" min="0" max="' + (dias.length - 1) + '" value="' + iAte + '" aria-label="Acumulado até"><b id="lbAte">' + lbl(S.ate) + '</b></div>'
     + '<p class="hint" style="margin:4px 0 0">Barras = valor do dia (na discagem: completadas em amarelo e não completadas em cinza); linha = acumulado (fecha com o funil). O "acumulado até" corta o gráfico, a tabela e o total.</p></div>';
@@ -698,7 +716,7 @@ function renderDia(){
   const aDe = acum.get(S.evDe), aAte = acum.get(S.evAte);
   h += '<div class="card"><h2>% Evolução entre dois dias</h2><div class="evRow"><span class="hint">De</span><select class="sel" id="selEvDe">' + optD(S.evDe) + '</select><span class="hint">até</span><select class="sel" id="selEvAte">' + optD(S.evAte) + '</select></div>'
     + '<div class="tscroll"><table class="x"><thead><tr><th>Indicador</th><th class="num">' + lbl(S.evDe) + '</th><th class="num">' + lbl(S.evAte) + '</th><th class="num">Evolução %</th><th class="num">Diferença</th></tr></thead><tbody>'
-    + EV_ORD.map(([k, n]) => { const v1 = valInd(aDe, k), v2 = valInd(aAte, k), ev = div(v2, v1) - 1, df = v2 - v1;
+    + EV_ORD.filter(([k]) => k !== "VCLI_TOTAL" || S.vcli).map(([k, n]) => { const v1 = valInd(aDe, k), v2 = valInd(aAte, k), ev = div(v2, v1) - 1, df = v2 - v1;
         return '<tr><td class="name">' + esc(n) + '</td><td class="num">' + fInt(v1) + '</td><td class="num">' + fInt(v2) + '</td><td class="num pctcol ' + (isFinite(ev) ? (ev >= 0 ? "good" : "bad") : "") + '">' + (isFinite(ev) ? (ev > 0 ? "+" : "") + fPct(ev) : "–")
           + '</td><td class="num">' + (df > 0 ? "+" : "") + fInt(df) + '</td></tr>'; }).join("")
     + '</tbody></table></div><p class="hint" style="margin:6px 0 0">Valores acumulados em cada data, na ordem do funil (do mailing até a venda).</p></div>';
@@ -708,6 +726,7 @@ function renderDia(){
     + vis.map(d => '<th class="num' + (off(d) ? " off" : "") + '">' + fDia(d) + '<br><span class="dsem">' + DSEM[dow(d)] + (fer.has(d) ? " · fer." : "") + '</span></th>').join("")
     + '<th class="num sepl tot">Acumulado<br><span class="dsem">até ' + fDia(S.ate) + '</span></th></tr></thead><tbody>';
   DIA_IND.forEach(([nome, f, t, cl]) => {
+    if ((cl === "vcli" && !S.vcli) || (cl === "loc" && !S.loc)) return;
     const ehPct = t.indexOf("pct") === 0;
     h += '<tr class="' + (cl || "") + (ehPct ? " pctrow" : "") + '"><td class="name stick">' + esc(nome) + '</td>'
       + vis.map(d => '<td class="num' + (off(d) ? " off" : "") + '">' + fmt(f(ehPct ? acum.get(d) : porDia.get(d)), t) + '</td>').join("")
