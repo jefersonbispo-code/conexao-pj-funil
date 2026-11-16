@@ -601,7 +601,10 @@ function fmt(v, t){
 }
 const VALIDADE = 45;   /* dias de validade da safra (igual a @DIAS_VALIDADE da query) */
 const fimSafra = s => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + VALIDADE - 1); return d.toISOString().slice(0, 10); };
-const safraAtiva = s => fimSafra(s) >= (S.corte || "");
+/* situacao da safra pela data de hoje (nao pela ultima data da base): uma safra que venceu
+   depois do ultimo dia carregado ja conta como encerrada */
+const hojeISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const safraAtiva = s => fimSafra(s) >= hojeISO();
 function renderFunil(){
   const fs = S.fSafra || "ativas";
   const sfs = S.safras.filter(s => fs === "todas" || (fs === "ativas" ? safraAtiva(s) : !safraAtiva(s)));
@@ -612,7 +615,7 @@ function renderFunil(){
   const nAt = S.safras.filter(safraAtiva).length, nIn = S.safras.length - nAt;
   const selS = '<select class="fsafra" id="fSafra">' + [["ativas","Safras ativas (" + nAt + ")"],["inativas","Safras encerradas (" + nIn + ")"],["todas","Todas as safras (" + S.safras.length + ")"]]
     .map(([v, t]) => '<option value="' + v + '"' + (v === fs ? ' selected' : '') + '>' + t + '</option>').join("") + '</select>';
-  let h = '<div class="card"><div class="bar-head"><div><h2>Funil consolidado · Conexão PJ</h2><p class="hint" style="margin:0">Soma dos dias de cada safra (os indicadores "novos" contam cada lead uma vez). Dados até ' + esc(fDiaAno(S.corte)) + '. Taxas do consolidado = total ÷ total. Vendas de indicação (fora do mailing) não têm safra: entram só no consolidado; as conversões usam as vendas do mailing. Safra ativa = dentro dos ' + VALIDADE + ' dias de validade.</p></div>' + selS + '</div>'
+  let h = '<div class="card"><div class="bar-head"><div><h2>Funil consolidado · Conexão PJ</h2><p class="hint" style="margin:0">Soma dos dias de cada safra (os indicadores "novos" contam cada lead uma vez). Dados até ' + esc(fDiaAno(S.corte)) + '. Taxas do consolidado = total ÷ total. Vendas de indicação (fora do mailing) não têm safra: entram só no consolidado; as conversões usam as vendas do mailing. Safra ativa = dentro dos ' + VALIDADE + ' dias de validade, contados até hoje.</p></div>' + selS + '</div>'
     + '<div class="tscroll"><table class="x funil"><thead><tr class="grp"><th></th>'
     + grupos.map(g => '<th colspan="' + g.cols.length + '" class="g-real sepl">' + esc(PNOME[g.p].toUpperCase()) + '</th>').join("") + '<th class="g-proj sepl">CONSOLIDADO</th></tr><tr><th>Indicador</th>'
     + grupos.map(g => g.cols.map((c, i) => '<th class="num' + (i === 0 ? " sepl" : "") + (c.tot ? " tot" : "") + '">' + esc(c.t)
@@ -684,17 +687,19 @@ function renderDia(){
   const rows = S.rows.filter(r => (!S.mes || mesDe(r.DATA) === S.mes) && (!S.perfil || r.PERFIL === S.perfil) && (!S.safra || r.SAFRA === S.safra));
   const fer = new Set(cfgFeriados());
   /* dias sem trabalho (sabado, domingo e feriado sem movimento) nao aparecem */
-  const mov = new Set(); rows.forEach(r => { if (NUMS.some(n => r[n])) mov.add(r.DATA); });
-  const offD = d => { const w = dow(d); return w === 0 || w === 6 || fer.has(d); };
-  const dias = (S.mes ? diasDoMes(S.mes).filter(d => d <= S.corte || rows.some(r => r.DATA === d))
-                      : Array.from(new Set(rows.map(r => r.DATA))).sort())
-               .filter(d => mov.has(d) || !offD(d));
+  /* so aparecem dias com producao da operacao (discagem, trabalhados, atendidas ou vendas tabuladas).
+     Dias sem producao (ex.: so conta aberta na Visao Cliente ou so mailing) nao viram coluna,
+     mas os numeros deles entram no acumulado do proximo dia com producao. */
+  const PROD = ["DISCAGEM","TRABALHADO_TOTAL","ATENDIDAS","VENDAS_NOVO","VENDAS_INDICACAO"];
+  const prod = new Set(); rows.forEach(r => { if (PROD.some(n => r[n])) prod.add(r.DATA); });
+  const todos = Array.from(new Set(rows.map(r => r.DATA))).sort();
+  const dias = todos.filter(d => prod.has(d));
   if (!dias.length){ $("#v_dia").innerHTML = '<div class="card"><p class="hint">Sem movimento no recorte escolhido.</p></div>'; return; }
-  const porDia = new Map(); dias.forEach(d => porDia.set(d, sum([])));
+  const porDia = new Map(); todos.forEach(d => porDia.set(d, sum([])));
   rows.forEach(r => { const a = porDia.get(r.DATA); if (a) NUMS.forEach(n => a[n] += r[n]); });
-  /* acumulado dia a dia */
+  /* acumulado dia a dia (inclui os dias sem producao, que nao aparecem como coluna) */
   const acum = new Map(); let run = sum([]);
-  dias.forEach(d => { const a = porDia.get(d), c = {}; NUMS.forEach(n => c[n] = run[n] + a[n]); acum.set(d, c); run = c; });
+  todos.forEach(d => { const a = porDia.get(d), c = {}; NUMS.forEach(n => c[n] = run[n] + a[n]); acum.set(d, c); run = c; });
   if (dias.indexOf(S.ate) < 0) S.ate = dias[dias.length - 1];
   if (dias.indexOf(S.evDe) < 0) S.evDe = dias[0];
   if (dias.indexOf(S.evAte) < 0) S.evAte = dias[dias.length - 1];
@@ -729,10 +734,10 @@ function renderDia(){
     if ((cl === "vcli" && !S.vcli) || (cl === "loc" && !S.loc)) return;
     const ehPct = t.indexOf("pct") === 0;
     h += '<tr class="' + (cl || "") + (ehPct ? " pctrow" : "") + '"><td class="name stick">' + esc(nome) + '</td>'
-      + vis.map(d => '<td class="num' + (off(d) ? " off" : "") + '">' + fmt(f(ehPct ? acum.get(d) : porDia.get(d)), t) + '</td>').join("")
+      + vis.map(d => '<td class="num' + (off(d) ? " off" : "") + '">' + (ehPct && !isFinite(f(porDia.get(d))) ? "–" : fmt(f(ehPct ? acum.get(d) : porDia.get(d)), t)) + '</td>').join("")
       + '<td class="num sepl tot">' + (cl === "aux" ? "–" : fmt(f(T), t)) + '</td></tr>';
   });
-  h += '</tbody></table></div><p class="hint" style="margin:6px 0 0">Linhas de % (grifadas) = taxa acumulada do 1º dia até a data da coluna. Como os indicadores "novos" contam cada lead só no 1º dia do evento, a taxa de um dia isolado podia passar de 100% (ex.: o contato efetivo de hoje de um lead cujo alô foi ontem); no acumulado isso não acontece.</p></div>';
+  h += '</tbody></table></div><p class="hint" style="margin:6px 0 0">Linhas de % (grifadas) = taxa acumulada do 1º dia até a data da coluna. Como os indicadores "novos" contam cada lead só no 1º dia do evento, a taxa de um dia isolado podia passar de 100% (ex.: o contato efetivo de hoje de um lead cujo alô foi ontem); no acumulado isso não acontece. Só aparecem dias com produção da operação; quando o indicador não teve movimento no dia, o % fica em branco (–) em vez de repetir o do dia anterior.</p></div>';
   $("#v_dia").innerHTML = h;
 
   const ink = cssv("--muted") || "#666", grid = cssv("--line") || "#ddd";
