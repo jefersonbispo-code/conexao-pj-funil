@@ -609,7 +609,8 @@ function renderFunil(){
   const fs = S.fSafra || "ativas";
   const sfs = S.safras.filter(s => fs === "todas" || (fs === "ativas" ? safraAtiva(s) : !safraAtiva(s)));
   const rowsF = S.rows.filter(r => r.SAFRA ? sfs.includes(r.SAFRA) : fs !== "inativas");   /* indicacao (sem safra) entra em ativas e todas */
-  const grupos = PERFIS.map(p => ({ p, cols:sfs.map(s => ({ t:fDiaAno(s), s, a:sum(rowsF.filter(r => r.PERFIL === p && r.SAFRA === s)) }))
+  /* so entram as safras com carga de mailing no perfil (ex.: safra so de nao correntista nao vira coluna zerada no correntista) */
+  const grupos = PERFIS.map(p => ({ p, cols:sfs.map(s => ({ t:fDiaAno(s), s, a:sum(rowsF.filter(r => r.PERFIL === p && r.SAFRA === s)) })).filter(c => c.a.MAILING_DISPONIBILIZADO > 0)
     .concat([{ t:"Consolidado", a:sum(rowsF.filter(r => r.PERFIL === p)), tot:true }]) }));
   const geral = sum(rowsF);
   const nAt = S.safras.filter(safraAtiva).length, nIn = S.safras.length - nAt;
