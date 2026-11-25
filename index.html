@@ -311,6 +311,79 @@ table.dia2 tr.destaque td.stick{background:linear-gradient(var(--amber-soft),var
 .kbar .sel,.fsafra{border:1px solid var(--line);border-radius:8px;padding:5px 10px;background:var(--panel);color:var(--ink);font:inherit}
 th .st{display:block;font-size:10px;font-weight:600;letter-spacing:.02em;margin-top:2px}
 th .st.on{color:#1E8449} th .st.off{color:var(--muted)}
+#v_renta td.name,#v_pend td.name{white-space:normal;max-width:none;overflow:visible}
+
+/* ================= TEMA C6 VIVO ================= */
+:root{
+  --c6-black:#0B0B0B; --c6-carbon:#1A1A1A; --c6-yel:#FFC400; --c6-yel-2:#FFE066; --c6-amb:#FF9F1C;
+  --bg:#F3F3EF; --panel:#FFFFFF; --panel-2:#F8F7F2; --line:#E6E4DC;
+  --amber-soft:#FFF3C4; --teal-soft:#FFF3C4; --gold:#E0AC00;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.06);
+  --shadow-up:0 2px 4px rgba(0,0,0,.06),0 14px 32px rgba(0,0,0,.12);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#080808;--panel:#141414;--panel-2:#1B1B1B;--line:#2A2A2A;--amber-soft:#3A2F08;--teal-soft:#3A2F08;--shadow:0 1px 2px rgba(0,0,0,.5);--shadow-up:0 10px 28px rgba(0,0,0,.6)}}
+:root[data-theme="dark"]{--bg:#080808;--panel:#141414;--panel-2:#1B1B1B;--line:#2A2A2A;--amber-soft:#3A2F08;--teal-soft:#3A2F08;--shadow:0 1px 2px rgba(0,0,0,.5);--shadow-up:0 10px 28px rgba(0,0,0,.6)}
+body{background:var(--bg)}
+/* topo: preto C6 com brilho amarelo */
+header.top{position:relative;overflow:hidden;background:radial-gradient(120% 140% at 100% 0%,rgba(255,196,0,.22) 0%,rgba(255,196,0,0) 45%),linear-gradient(135deg,#050505 0%,#161616 60%,#0B0B0B 100%);border-radius:20px;padding:20px 24px;box-shadow:0 18px 40px rgba(0,0,0,.25)}
+header.top::before{content:"";position:absolute;right:-60px;bottom:-80px;width:280px;height:280px;border-radius:50%;border:36px solid rgba(255,196,0,.10);pointer-events:none}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--c6-yel),var(--c6-amb),var(--c6-yel));background-size:200% 100%;animation:c6flow 6s linear infinite}
+@keyframes c6flow{to{background-position:200% 0}}
+header.top .brand h1::after{background:linear-gradient(90deg,var(--c6-yel),var(--c6-amb));width:72px;height:5px}
+header.top .btn{border-radius:999px;transition:transform .15s,background .15s}
+header.top .btn:hover{transform:translateY(-1px);background:#2A2A2A}
+header.top .btn.primary{background:var(--c6-yel);border-color:var(--c6-yel);color:#0B0B0B;font-weight:600;box-shadow:0 6px 18px rgba(255,196,0,.35)}
+header.top .btn.primary:hover{background:var(--c6-yel-2)}
+/* abas em pilulas */
+.tabs{position:sticky;top:8px;z-index:30;gap:6px;border:1px solid #2E2E2E!important;background:var(--c6-black);padding:6px;border-radius:999px;margin:18px 0 18px;box-shadow:var(--shadow-up);width:max-content;max-width:100%}
+.tabs button{border:0!important;border-radius:999px;padding:9px 18px;color:#CFCFCF;font-weight:600;transition:background .2s,color .2s,transform .15s}
+.tabs button:hover{color:#fff;background:#262626}
+.tabs button.on{background:var(--c6-yel);color:#0B0B0B!important;box-shadow:0 4px 14px rgba(255,196,0,.4)}
+/* barra do consolidado */
+.kbar{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 8px 6px 16px;width:max-content;max-width:100%;box-shadow:var(--shadow)}
+.kbar b{font-family:var(--f-num);font-size:15px}
+.kbar .sel{border-radius:999px;border-color:var(--c6-yel);background:var(--amber-soft);font-weight:600}
+/* KPIs em cartoes */
+.kpis{background:none!important;border:0!important;overflow:visible!important;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}
+.kpi{position:relative;background:var(--panel);border:1px solid var(--line)!important;border-radius:16px;padding:16px 16px 14px;box-shadow:var(--shadow);transition:transform .18s,box-shadow .18s;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:linear-gradient(90deg,var(--c6-yel),var(--c6-amb))}
+.kpi:nth-child(4n+2)::before{background:linear-gradient(90deg,#0B0B0B,#555)}
+.kpi:nth-child(4n+3)::before{background:linear-gradient(90deg,var(--c6-amb),var(--c6-yel))}
+.kpi:nth-child(4n+4)::before{background:linear-gradient(90deg,#555,#0B0B0B)}
+:root[data-theme="dark"] .kpi:nth-child(4n+2)::before,:root[data-theme="dark"] .kpi:nth-child(4n+4)::before{background:linear-gradient(90deg,#F2F2F2,#888)}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-up)}
+.kpi .n{text-transform:uppercase;letter-spacing:.05em;font-size:11px;font-weight:600}
+.kpi .v{font-size:clamp(24px,2.4vw,32px)}
+.kpi.proj{background:linear-gradient(160deg,var(--amber-soft),var(--panel) 70%)}
+/* cartoes e controles */
+.card,.ctrl{border-radius:18px;box-shadow:var(--shadow);border-color:var(--line)}
+.card{padding:18px 20px;animation:c6in .35s ease both}
+@keyframes c6in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card h2{font-size:20px;display:flex;align-items:center;gap:10px}
+.card h2::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--c6-yel);box-shadow:0 0 0 4px rgba(255,196,0,.22);flex:none}
+.ctrl select,select.sel{border-radius:10px;transition:border-color .15s,box-shadow .15s}
+.ctrl select:hover,.ctrl select:focus,select.sel:focus{border-color:var(--c6-yel);box-shadow:0 0 0 3px rgba(255,196,0,.25)}
+.btn{border-radius:999px;transition:transform .15s,box-shadow .15s,border-color .15s}
+.btn:hover{transform:translateY(-1px);border-color:var(--c6-yel);box-shadow:0 6px 16px rgba(255,196,0,.25)}
+.btn.ghost{background:var(--panel)}
+/* tabelas */
+.tscroll{border-radius:14px;border-color:var(--line)}
+table.x thead th,thead th{background:var(--c6-black)!important;color:#F2F2F2!important;border-bottom:0}
+table.x thead tr.grp th{background:var(--c6-carbon)!important}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:rgba(255,196,0,.10)!important}
+table.funil tr.destaque td{background:linear-gradient(90deg,rgba(255,196,0,.28),rgba(255,196,0,.10))!important}
+table.funil tr.destaque td.name{box-shadow:inset 4px 0 0 var(--c6-yel)}
+table.funil td.tot,table.funil th.tot{background:rgba(255,196,0,.08)}
+table.funil tr.aux td{color:var(--muted);font-style:italic}
+td.c6bar{background-image:linear-gradient(90deg,rgba(255,196,0,.55),rgba(255,159,28,.45));background-repeat:no-repeat;background-size:var(--w,0%) 62%;background-position:left center;transition:background-size .6s ease}
+.legend2{margin-top:10px}
+/* login e vazio */
+dialog{border-radius:18px;box-shadow:var(--shadow-up)}
+dialog h2::after{content:"";display:block;width:48px;height:4px;border-radius:2px;background:var(--c6-yel);margin-top:8px}
+.empty{border-radius:20px;border-color:var(--c6-yel)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:700px){.tabs{width:auto;border-radius:16px;position:static}.kbar{width:auto;border-radius:14px}}
 </style>
 </head>
 <body>
@@ -341,6 +414,8 @@ th .st.on{color:#1E8449} th .st.off{color:var(--muted)}
     <nav class="tabs" id="tabs" role="tablist">
       <button data-t="funil" class="on">Funil consolidado</button>
       <button data-t="dia">Dia a dia</button>
+      <button data-t="renta">Rentabilização</button>
+      <button data-t="pend">Pendência Doc</button>
       <button data-t="proj">Projeção do mês</button>
       <button data-t="acessos" id="tabAcessos" class="hidden">Acessos</button>
     </nav>
@@ -352,6 +427,8 @@ th .st.on{color:#1E8449} th .st.off{color:var(--muted)}
     <div id="v_funil"></div>
     <div id="v_dia" class="hidden"></div>
     <div id="v_proj" class="hidden"></div>
+    <div id="v_renta" class="hidden"></div>
+    <div id="v_pend" class="hidden"></div>
     <div id="v_acessos" class="hidden"></div>
   </main>
 <dialog id="dlgLogin">
@@ -413,13 +490,22 @@ async function readFile(file){
     const FS = [["\t",cnt("\t")],[";",cnt(";")],[",",cnt(",")]].sort((a,b) => b[1]-a[1])[0][0];
     wb = XLSX.read(text, { type:"string", FS, raw:true });
   } else wb = XLSX.read(await file.arrayBuffer(), { type:"array" });
+  /* abas: funil (DATA + PERFIL) e, se houver, as duas saidas da query da rentabilizacao */
+  const out = { main:null, rC:null, rD:null, rA:null, pC:null, pD:null, pM:null };
   for (const sn of wb.SheetNames){
     const r = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval:null, raw:true });
     if (!r.length) continue;
     const keys = Object.keys(r[0]).map(normKey);
-    if (keys.includes("DATA") && keys.includes("PERFIL")) return r;
+    if (keys.includes("DATA") && keys.includes("PERFIL")) out.main = r;
+    else if (keys.includes("CNPJ_RENTA") && keys.includes("MES_CONTA")) out.rC = r;
+    else if (keys.includes("DIA_RENTA")) out.rD = r;
+    else if (keys.includes("CNPJ_AGEND")) out.rA = r;
+    else if (keys.includes("CNPJ_PEND")) out.pC = r;
+    else if (keys.includes("DIA_PEND")) out.pD = r;
+    else if (keys.includes("MAILING_PEND")) out.pM = r;
   }
-  throw new Error("Não encontrei as colunas DATA e PERFIL em nenhuma aba. Use o resultado da query dia a dia V4.");
+  if (!out.main && !out.rC && !out.pC) throw new Error("Não encontrei as colunas DATA e PERFIL (funil) nem as da rentabilização ou da pendência doc em nenhuma aba.");
+  return out;
 }
 
 
@@ -451,6 +537,67 @@ const mesDe = iso => iso.slice(0, 7);
 const fMesIso = ym => ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+ym.slice(5, 7) - 1] + "/" + ym.slice(2, 4);
 const dow = iso => new Date(iso + "T12:00:00").getDay();
 
+/* rentabilizacao: contas do balde ativo (saida 1) e dia a dia (saida 2) da query C6_CXPJ_RENTABILIZACAO_FUNIL */
+const RC_TXT = ["CNPJ_RENTA","MES_CONTA","DT_CONTA_CRIADA","STATUS_CONTA","DT_ENTRADA_MAILING","DT_PRIMEIRA_DISCAGEM","RESULTADO","DT_PRIMEIRO_CONTATO"];
+const RC_NUM = ["COM_LEAD","DISCADO","TENTATIVAS","TRAB_CRM","BLOCKLIST","ALO","WPP","CE_VOZ","CE_WPP"];
+const RD_NUM = ["MAILING_ENTRADA","MAILING_ENTRADA_BALDE","CONTAS_ABERTAS","DISCAGENS","CNPJS_DISCADOS","ALO","CONTATO_EFETIVO_VOZ","CONVERSA_WPP","AGEND_NEGOCIACAO","RECUSA","CESTA","AGENDAMENTO"];
+const RA_TXT = ["CNPJ_AGEND","DT_TABULACAO","STATUS_ABERTURA","DT_AGENDAMENTO","TELEFONE_AGENDAMENTO","DT_ENTRADA_MAILING","DT_PRIMEIRA_DISCAGEM","SITUACAO_AGEND"];
+const RA_NUM = ["COM_LEAD","TENTATIVAS_NO_DIA"];
+/* "AAAA-MM-DD HH:MM" a partir de numero de serie do Excel, Date ou texto (AAAA-MM-DD HH:MM ou DD/MM/AAAA HH:MM) */
+function dataHora(v){
+  if (v == null || v === "") return "";
+  if (typeof v === "number"){ const d = new Date(Math.round((v - 25569) * 86400000)); return d.toISOString().slice(0, 16).replace("T", " "); }
+  if (v instanceof Date) return new Date(v.getTime() - v.getTimezoneOffset() * 60000).toISOString().slice(0, 16).replace("T", " ");
+  const t = String(v).trim().replace(",", ".");
+  if (/^\d{5}(\.\d+)?$/.test(t)) return dataHora(Number(t)); /* serial do Excel gravado como texto */
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?/);
+  if (m) return m[1] + "-" + m[2] + "-" + m[3] + " " + (m[4] || "00:00");
+  m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*(\d{1,2}:\d{2})?/);
+  if (m) return m[3] + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0") + " " + (m[4] ? m[4].padStart(5, "0") : "00:00");
+  return "";
+}
+function encodeRenta(rC, rD, rA){
+  if (!rC) return null;
+  const km = {}; Object.keys(rC[0]).forEach(k => km[normKey(k)] = k);
+  const c = rC.filter(r => clean(r[km.CNPJ_RENTA])).map(r => RC_TXT.map(n => /^DT_/.test(n) ? toISO(r[km[n]]) : n === "MES_CONTA" ? clean(r[km[n]]).slice(0, 7) : clean(r[km[n]]))
+    .concat(RC_NUM.map(n => km[n] ? num(r[km[n]]) : 0)));
+  let d = [];
+  if (rD && rD.length){ const kd = {}; Object.keys(rD[0]).forEach(k => kd[normKey(k)] = k);
+    d = rD.map(r => [toISO(r[kd.DIA_RENTA])].concat(RD_NUM.map(n => kd[n] ? num(r[kd[n]]) : 0))).filter(a => a[0]); }
+  let a = null;
+  if (rA && rA.length){ const ka = {}; Object.keys(rA[0]).forEach(k => ka[normKey(k)] = k);
+    a = rA.filter(r => clean(r[ka.CNPJ_AGEND])).map(r => RA_TXT.map(n => n === "DT_AGENDAMENTO" ? dataHora(r[ka[n]])
+      : /^DT_/.test(n) ? toISO(r[ka[n]]) : clean(r[ka[n]])).concat(RA_NUM.map(n => ka[n] ? num(r[ka[n]]) : 0))); }
+  return { c, d, a, em:new Date().toISOString() };
+}
+/* pendencia doc: saidas da query C6_CXPJ_PENDENCIA_DOC_FUNIL */
+const PC_TXT = ["CNPJ_PEND","MES_ENTRADA","DT_ENTRADA_MAILING","DT_ULTIMO_MAILING","STATUS_ABERTURA","STATUS_LEAD","DT_CONTA_CRIADA","DT_PRIMEIRO_ATENDIMENTO","RESULTADO","DT_DOC_ENVIADO","SITUACAO_C6","DT_PRIMEIRO_CE","DT_PRIMEIRO_WPP","DT_NEGOCIACAO","DT_RECUSA"];
+const PC_NUM = ["MAILINGS","NO_MAILING","TRAB_CRM","TENTATIVAS","ALO","WPP","CE","CE_VOZ","CE_WPP"];
+const PD_NUM = ["MAILING_ENTRADA","MAILING_CARGA","ATENDIMENTOS","CNPJS_TRABALHADOS","ALO","WHATSAPP","CONTATO_EFETIVO","NEGOCIACAO","RECUSA","DOC_ENVIADO","CONTAS_APROVADAS"];
+const PM_NUM = ["CNPJS","CNPJS_NOVOS","TRABALHADOS","CONTATO_EFETIVO","DOC_ENVIADO","APROVADAS","AINDA_PENDENTES"];
+function encodePend(pC, pD, pM){
+  if (!pC) return null;
+  const km = {}; Object.keys(pC[0]).forEach(k => km[normKey(k)] = k);
+  const c = pC.filter(r => clean(r[km.CNPJ_PEND])).map(r => PC_TXT.map(n => /^DT_/.test(n) ? toISO(r[km[n]]) : n === "MES_ENTRADA" ? clean(r[km[n]]).slice(0, 7) : clean(r[km[n]]))
+    .concat(PC_NUM.map(n => km[n] ? num(r[km[n]]) : 0)));
+  let d = [];
+  if (pD && pD.length){ const kd = {}; Object.keys(pD[0]).forEach(k => kd[normKey(k)] = k);
+    d = pD.map(r => [toISO(r[kd.DIA_PEND])].concat(PD_NUM.map(n => kd[n] ? num(r[kd[n]]) : 0))).filter(a => a[0]); }
+  let m = [];
+  if (pM && pM.length){ const kk = {}; Object.keys(pM[0]).forEach(k => kk[normKey(k)] = k);
+    m = pM.filter(r => clean(r[kk.MAILING_PEND])).map(r => [clean(r[kk.MAILING_PEND]), toISO(r[kk.DT_MAILING])].concat(PM_NUM.map(n => kk[n] ? num(r[kk[n]]) : 0))); }
+  return { c, d, m, em:new Date().toISOString() };
+}
+function encodeAll(x, prev){
+  /* arquivo so com as abas da rentabilizacao: mantem o funil publicado e troca a rentabilizacao; sem as abas: mantem a rentabilizacao anterior */
+  const enc = x.main ? encode(x.main) : (prev ? Object.assign({}, prev) : null);
+  if (!enc) throw new Error("Esse arquivo só tem as abas da rentabilização / pendência doc. Abra antes a base do funil.");
+  const r = encodeRenta(x.rC, x.rD, x.rA);
+  enc.renta = r || (prev && prev.renta) || null;
+  const pd = encodePend(x.pC, x.pD, x.pM);
+  enc.pend = pd || (prev && prev.pend) || null;
+  return enc;
+}
 function encode(rows){
   const km = {}; Object.keys(rows[0]).forEach(k => km[normKey(k)] = k);
   if (!km.DATA || !km.PERFIL || !km.DATA_SAFRA) throw new Error("O arquivo precisa ter DATA, DATA_SAFRA e PERFIL (resultado da query dia a dia V4).");
@@ -473,7 +620,13 @@ function load(enc, meta){
   S.erroApp = !!enc.erroApp; S.vcli = !!enc.vcli; S.loc = !!enc.loc;
   /* bases antigas (sem colunas novas, ex. DISCAGEM_COMPLETADA) entram com 0 */
   (enc.rows || []).forEach(r => NUMS.forEach(n => { if (r[n] == null || isNaN(r[n])) r[n] = 0; }));
-  S.rows = enc.rows; S.meta = meta || S.meta;
+  S.rows = enc.rows; S.meta = meta || S.meta; S.enc = enc;
+  S.rentaC = enc.renta ? enc.renta.c.map(a => { const o = {}; RC_TXT.forEach((n, i) => o[n] = a[i]); RC_NUM.forEach((n, i) => o[n] = a[RC_TXT.length + i]); return o; }) : null;
+  S.rentaA = enc.renta && enc.renta.a ? enc.renta.a.map(a => { const o = {}; RA_TXT.forEach((n, i) => o[n] = a[i]); o.DT_AGENDAMENTO = dataHora(o.DT_AGENDAMENTO); RA_NUM.forEach((n, i) => o[n] = a[RA_TXT.length + i]); return o; }) : null;
+  S.rentaD = enc.renta ? enc.renta.d.map(a => { const o = { DIA:a[0] }; RD_NUM.forEach((n, i) => o[n] = a[1 + i]); return o; }) : null;
+  S.pendC = enc.pend ? enc.pend.c.map(a => { const o = {}; PC_TXT.forEach((n, i) => o[n] = a[i]); PC_NUM.forEach((n, i) => o[n] = a[PC_TXT.length + i]); return o; }) : null;
+  S.pendD = enc.pend ? enc.pend.d.map(a => { const o = { DIA:a[0] }; PD_NUM.forEach((n, i) => o[n] = a[1 + i]); return o; }) : null;
+  S.pendM = enc.pend ? (enc.pend.m || []).map(a => { const o = { MAILING:a[0], DT:a[1] }; PM_NUM.forEach((n, i) => o[n] = a[2 + i]); return o; }) : null;
   S.safras = Array.from(new Set(S.rows.map(r => r.SAFRA).filter(Boolean))).sort();
   S.meses = Array.from(new Set(S.rows.map(r => mesDe(r.DATA)))).sort();
   S.corte = S.rows.reduce((m, r) => r.DATA > m ? r.DATA : m, "");
@@ -518,7 +671,10 @@ $("#tabs").onclick = e => { const t = e.target.dataset.t; if (!t) return; S.tab 
 
 function refresh(){
   if (!S.rows) return;
-  ["funil","dia","proj","acessos"].forEach(t => $("#v_" + t).classList.toggle("hidden", S.tab !== t));
+  ["funil","dia","proj","renta","pend","acessos"].forEach(t => $("#v_" + t).classList.toggle("hidden", S.tab !== t));
+  /* o consolidado do mes no topo e do funil de abertura: some na aba da rentabilizacao */
+  const semKpi = S.tab === "renta" || S.tab === "pend";
+  document.querySelector(".kbar").classList.toggle("hidden", semKpi); $("#kpis").classList.toggle("hidden", semKpi);
   $("#ctrlDia").classList.toggle("hidden", S.tab !== "dia" && S.tab !== "proj");
   $("#wSafra").classList.toggle("hidden", S.tab !== "dia");
   $("#wPerfil").classList.toggle("hidden", S.tab !== "dia");
@@ -526,6 +682,8 @@ function refresh(){
   if (S.tab === "funil") renderFunil();
   else if (S.tab === "dia") renderDia();
   else if (S.tab === "proj") renderProj();
+  else if (S.tab === "renta") renderRenta();
+  else if (S.tab === "pend") renderPend();
   else if (S.tab === "acessos") renderAcessos();
 }
 
@@ -772,6 +930,153 @@ function renderDia(){
 
 /* ---------- 3. projecao do mes (linear, dias uteis seg-sex sem feriado) ---------- */
 function diasUteis(ym){ const fer = new Set(cfgFeriados()); return diasDoMes(ym).filter(d => { const w = dow(d); return w !== 0 && w !== 6 && !fer.has(d); }); }
+/* ---------- rentabilizacao (qualificacao): funil do balde ativo + dia a dia ---------- */
+const R_FUNIL = [
+  ["Balde", r => true, "b"],
+  ["Trabalhado discador qualificação", r => r.DISCADO === 1 || r.TRAB_CRM === 1, "", "Conta discada na campanha 1010 ou com atendimento no CRM da rentabilização (manual ou WhatsApp)."],
+  ["Alô para humano", r => r.ALO === 1, "", "Ligação que chegou a um agente (discador ou atendimento por voz no CRM)."],
+  ["Sem alô e com WhatsApp", r => r.ALO !== 1 && r.WPP === 1, "", ""],
+  ["Contato efetivo voz", r => r.CE_VOZ === 1, "", "Atuação, em negociação, recusa ou cesta completa por voz."],
+  ["Conversa ativa WhatsApp", r => r.CE_VOZ !== 1 && r.CE_WPP === 1, "", "Contato efetivo só pelo WhatsApp."],
+  ["Agendamento com negociação", r => r.RESULTADO === "ATUACAO" || r.RESULTADO === "PROMESSA", "", "Atuação (chave PIX, boleto, cartão, C6 Pay) ou promessa."],
+  ["Finalização por recusa", r => r.RESULTADO === "RECUSA", "", ""],
+  ["Finalização por Cesta completa", r => r.RESULTADO === "CESTA", "", ""],
+  ["Agendamento em aberto encarteirado", r => r.RESULTADO === "AGENDAMENTO", "", "Agendamento privado, pedido de contato por WhatsApp ou erro de app, sem finalização."],
+  ["Lead na blocklist do C6", r => r.DISCADO !== 1 && r.TRAB_CRM !== 1 && r.BLOCKLIST === 1, "", "Não trabalhada e com algum telefone na blocklist do C6."],
+  ["Contas disponíveis para discagem, sem trabalhar", r => r.DISCADO !== 1 && r.TRAB_CRM !== 1 && r.BLOCKLIST !== 1, "f", ""],
+  ["Das disponíveis: sem lead na qualificação", r => r.DISCADO !== 1 && r.TRAB_CRM !== 1 && r.BLOCKLIST !== 1 && r.COM_LEAD !== 1, "aux", "Conta aberta que não entrou no mailing da rentabilização."]
+];
+const R_DIA = [["MAILING_ENTRADA","Entrada de mailing"],["MAILING_ENTRADA_BALDE","dos quais do balde"],["CONTAS_ABERTAS","Contas abertas"],["DISCAGENS","Discagens"],["CNPJS_DISCADOS","Contas discadas"],
+  ["ALO","Alô"],["CONTATO_EFETIVO_VOZ","Contato efetivo voz"],["CONVERSA_WPP","Conversa WhatsApp"],["AGEND_NEGOCIACAO","Agendamento Encarteirado"],["RECUSA","Recusa"],["CESTA","Cesta completa"],["AGENDAMENTO","Agend. em aberto"]];
+function renderRenta(){
+  const v = $("#v_renta");
+  if (!S.rentaC){ v.innerHTML = '<div class="card"><h2>Rentabilização</h2><p class="hint" style="margin:0">A base carregada não tem as abas da rentabilização. Rode a query <b>C6_CXPJ_RENTABILIZACAO_FUNIL</b> e cole as três saídas como abas no Excel do funil (ou suba um Excel só com essas duas abas: o painel mantém o funil que já está publicado).</p></div>'; return; }
+  const C = S.rentaC, meses = Array.from(new Set(C.map(r => r.MES_CONTA).filter(Boolean))).sort();
+  const nB = C.length;
+  const corte = S.enc && S.enc.renta && S.enc.renta.em ? new Date(S.enc.renta.em).toLocaleDateString("pt-BR") : "";
+  let h = '<div class="card"><div class="bar-head"><div><h2>Funil da rentabilização · balde ativo</h2><p class="hint" style="margin:0">Balde = contas abertas no mês atual e no anterior (a conta pode ser acionada até o fim do mês seguinte ao da abertura). Cada conta conta uma vez; o resultado é a melhor tabulação dela: cesta, atuação, promessa, recusa e agendamento.</p></div>'
+    + '<button class="btn ghost" id="btnRentaXlsx">Baixar contas (Excel)</button></div>'
+    + '<div class="tscroll"><table class="x funil"><thead><tr><th>Etapa</th>' + meses.map(m => '<th class="num">Contas ' + fMesAno(m) + '</th>').join("") + '<th class="num tot">Total</th><th class="num">% do balde</th></tr></thead><tbody>';
+  R_FUNIL.forEach(([nome, f, cl, dica]) => {
+    const tot = C.filter(f).length;
+    h += '<tr' + (cl ? ' class="' + (cl === "b" ? "destaque" : cl === "f" ? "destaque" : "aux") + '"' : '') + '><td class="name"' + (dica ? ' title="' + esc(dica) + '"' : '') + '>' + (cl === "b" ? '<b>' + esc(nome) + '</b>' : esc(nome)) + '</td>'
+      + meses.map(m => '<td class="num">' + fInt(C.filter(r => r.MES_CONTA === m && f(r)).length) + '</td>').join("")
+      + '<td class="num tot"><b>' + fInt(tot) + '</b></td><td class="num">' + fPct(div(tot, nB)) + '</td></tr>';
+  });
+  h += '</tbody></table></div><p class="legend2" style="margin:8px 0 0">Passe o mouse no nome da etapa para ver a regra. Lead na blocklist e contas disponíveis contam só as contas não trabalhadas; Balde = trabalhado + blocklist + disponíveis.</p></div>';
+  /* leads originados de abertura OK com agendamento */
+  if (S.rentaA){
+    const A = S.rentaA, SIT = [["DISCADO NO DIA AGENDADO","Discado no dia agendado"],["DISCADO EM OUTRO DIA","Discado em outro dia"],["PENDENTE DE DISCAGEM","Pendente de discagem"],["AGENDAMENTO FUTURO","Agendamento futuro"],["SEM LEAD","Sem lead na rentabilização"]];
+    const cnt = (l, k) => l.filter(x => x.SITUACAO_AGEND === k).length, comLead = A.filter(x => x.COM_LEAD === 1).length;
+    /* base do %: leads ja trabalhados ou com agendamento vencido (no dia + outro dia + pendente = 100%) */
+    const venc = A.filter(x => x.COM_LEAD === 1 && x.SITUACAO_AGEND !== "AGENDAMENTO FUTURO").length;
+    h += '<div class="card"><div class="bar-head"><div><h2>Leads de abertura OK com agendamento</h2><p class="hint" style="margin:0">Contas tabuladas como abertura OK com agendamento para a qualificação. "No dia agendado" = discagem da campanha 1010 ou atendimento no CRM da rentabilização no dia marcado. % sobre os leads já discados ou com agendamento vencido.</p></div>'
+      + '<button class="btn ghost" id="btnAgdXlsx">Baixar pendentes (Excel)</button></div>'
+      + '<div class="kpis" style="margin:12px 0">'
+      + '<div class="kpi"><div class="n">Aberturas com agendamento</div><div class="v">' + fInt(A.length) + '</div><div class="s">' + fInt(comLead) + ' viraram lead na rentabilização</div></div>'
+      + SIT.map(([k, t]) => { const n = cnt(A, k); return '<div class="kpi"><div class="n">' + t + '</div><div class="v">' + fInt(n) + '</div><div class="s">'
+          + (k === "SEM LEAD" ? fPct(div(n, A.length)) + ' das aberturas agendadas' : k === "AGENDAMENTO FUTURO" ? 'agendamento depois de hoje' : fPct(div(n, venc)) + ' dos leads') + '</div></div>'; }).join("")
+      + '</div></div>';
+  }
+  /* dia a dia: uma linha por dia, so dias com movimento */
+  const D = (S.rentaD || []).filter(d => R_DIA.some(([k]) => d[k])).sort((a, b) => b.DIA.localeCompare(a.DIA));
+  const T = {}; R_DIA.forEach(([k]) => T[k] = D.reduce((s, d) => s + d[k], 0));
+  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Entrada de mailing = contas que entraram no mailing da rentabilização pela primeira vez no dia. Demais colunas = contas distintas com a etapa no dia (toda a rentabilização, não só o balde). Só aparecem dias com movimento.</p>'
+    + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + R_DIA.map(([, t]) => '<th class="num">' + esc(t) + '</th>').join("") + '</tr></thead><tbody>'
+    + '<tr class="destaque"><td class="name"><b>Total</b></td>' + R_DIA.map(([k]) => '<td class="num"><b>' + fInt(T[k]) + '</b></td>').join("") + '</tr>'
+    + D.map(d => '<tr><td class="name">' + fDia(d.DIA) + ' ' + DSEM[dow(d.DIA)] + '</td>' + R_DIA.map(([k]) => '<td class="num">' + (d[k] ? fInt(d[k]) : '<span style="color:var(--muted)">–</span>') + '</td>').join("") + '</tr>').join("")
+    + '</tbody></table></div></div>';
+  v.innerHTML = h;
+  const ba = $("#btnAgdXlsx"); if (ba) ba.onclick = () => {
+    const out = S.rentaA.filter(x => x.SITUACAO_AGEND === "PENDENTE DE DISCAGEM" || x.SITUACAO_AGEND === "DISCADO EM OUTRO DIA").map(x => ({ CNPJ:x.CNPJ_AGEND, "Tabulação":fDiaAno(x.DT_TABULACAO), "Status da abertura":x.STATUS_ABERTURA,
+      "Agendamento":x.DT_AGENDAMENTO ? x.DT_AGENDAMENTO.slice(8, 10) + "/" + x.DT_AGENDAMENTO.slice(5, 7) + "/" + x.DT_AGENDAMENTO.slice(0, 4) + " " + x.DT_AGENDAMENTO.slice(11, 16) : "", "Telefone do agendamento":x.TELEFONE_AGENDAMENTO,
+      "Entrou no mailing":x.DT_ENTRADA_MAILING ? fDiaAno(x.DT_ENTRADA_MAILING) : "", "1ª discagem":x.DT_PRIMEIRA_DISCAGEM ? fDiaAno(x.DT_PRIMEIRA_DISCAGEM) : "", "Situação":x.SITUACAO_AGEND }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out), "Agendamentos"); XLSX.writeFile(wb, "Rentabilizacao_agendamentos_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+  };
+  $("#btnRentaXlsx").onclick = () => {
+    const out = C.map(r => { const o = { CNPJ:r.CNPJ_RENTA, "Mês da conta":fMesAno(r.MES_CONTA), "Conta criada":fDiaAno(r.DT_CONTA_CRIADA), "Status da conta":r.STATUS_CONTA,
+      "Entrou no mailing":r.DT_ENTRADA_MAILING ? fDiaAno(r.DT_ENTRADA_MAILING) : "não", "1ª discagem":fDiaAno(r.DT_PRIMEIRA_DISCAGEM), "Tentativas":r.TENTATIVAS, "Resultado":r.RESULTADO };
+      R_FUNIL.slice(1).forEach(([n, f]) => o[n] = f(r) ? 1 : 0); return o; });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out), "Contas"); XLSX.writeFile(wb, "Rentabilizacao_balde_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+  };
+}
+
+/* ---------- pendencia de documentos: funil por mes de entrada no mailing + por mailing + dia a dia ---------- */
+const P_FUNIL = [
+  ["Contas no mailing de pendência", r => true, "b", "CNPJs que entraram em algum mailing PEN_DOC. A coluna é o mês da primeira entrada."],
+  ["Trabalhadas", r => r.TRAB_CRM === 1, "", "Com algum atendimento no CRM da pendência doc depois da entrada no mailing (voz ou WhatsApp)."],
+  ["Contato efetivo voz", r => r.CE_VOZ === 1, "", "Em negociação, documento enviado ou não tem interesse, por voz."],
+  ["Contato efetivo só WhatsApp", r => r.CE_VOZ !== 1 && r.CE_WPP === 1, "", ""],
+  ["Em negociação", r => r.RESULTADO === "NEGOCIACAO", "", "Agendamento ou pedido de contato por WhatsApp, sem finalização."],
+  ["Finalização por recusa", r => r.RESULTADO === "RECUSA", "", "Não quis reenviar o documento ou insistência de ligações."],
+  ["Documento enviado (tabulado)", r => r.RESULTADO === "DOC ENVIADO", "", "Tabulação de sucesso no CRM."],
+  ["Conta aprovada pelo C6", r => r.SITUACAO_C6 === "APROVADA", "f", "Conta criada na Visão Cliente na data da entrada no mailing ou depois."],
+  ["Das aprovadas: com documento enviado tabulado", r => r.SITUACAO_C6 === "APROVADA" && r.RESULTADO === "DOC ENVIADO", "aux", ""],
+  ["Ainda pendente de documento", r => r.SITUACAO_C6 === "PENDENTE DOC", "", "Suspensa com reenvio de documentação na última foto da Visão Cliente."],
+  ["Cancelada ou reprovada", r => r.SITUACAO_C6 === "CANCELADA", "", ""],
+  ["Em análise no C6", r => r.SITUACAO_C6 === "EM ANALISE", "", "Pendente manual."],
+  ["Sem trabalhar", r => r.TRAB_CRM !== 1, "f", "Sem nenhum atendimento no CRM da pendência depois da entrada."],
+  ["Das sem trabalhar: ainda pendentes", r => r.TRAB_CRM !== 1 && r.SITUACAO_C6 === "PENDENTE DOC", "aux", ""]
+];
+/* dia a dia sem duplicidade: cada conta entra uma vez, no primeiro dia da etapa (atendimentos = volume de ligacoes/conversas) */
+const P_DIA = [["NOVOS","CNPJs na carga"],["TRAB","Contas trabalhadas"],["WPP","Com WhatsApp"],["CE","Contato efetivo"],["NEG","Em negociação"],["REC","Recusa"],["DOC","Doc enviado"],["APROV","Contas aprovadas"]];
+function renderPend(){
+  const v = $("#v_pend");
+  if (!S.pendC){ v.innerHTML = '<div class="card"><h2>Pendência Doc</h2><p class="hint" style="margin:0">A base carregada não tem as abas da pendência de documentos. Rode a query <b>C6_CXPJ_PENDENCIA_DOC_FUNIL</b> e cole as três saídas como abas no Excel do funil (ou suba um Excel só com essas abas: o painel mantém o que já está publicado).</p></div>'; return; }
+  /* so os 2 meses vigentes: mes atual e mes anterior (pela data de hoje) */
+  const hj = new Date(), mAt = hj.getFullYear() + "-" + String(hj.getMonth() + 1).padStart(2, "0");
+  const ant = new Date(hj.getFullYear(), hj.getMonth() - 1, 1), mAnt = ant.getFullYear() + "-" + String(ant.getMonth() + 1).padStart(2, "0");
+  const vig = m => m === mAt || m === mAnt, iniVig = mAnt + "-01";
+  const C = S.pendC.filter(r => r.NO_MAILING === 1 && vig(r.MES_ENTRADA)), F = S.pendC.filter(r => r.NO_MAILING !== 1);
+  const meses = Array.from(new Set(C.map(r => r.MES_ENTRADA).filter(Boolean))).sort(), nB = C.length;
+  const pendHoje = S.pendC.filter(r => r.SITUACAO_C6 === "PENDENTE DOC").length;
+  const aprov = C.filter(r => r.SITUACAO_C6 === "APROVADA").length, trab = C.filter(r => r.TRAB_CRM === 1).length, doc = C.filter(r => r.RESULTADO === "DOC ENVIADO").length;
+  let h = '<div class="kpis" style="margin:0 0 14px">'
+    + '<div class="kpi"><div class="n">Contas no mailing</div><div class="v">' + fInt(nB) + '</div><div class="s">' + fInt(trab) + ' trabalhadas (' + fPct(div(trab, nB)) + ')</div></div>'
+    + '<div class="kpi"><div class="n">Documento enviado</div><div class="v">' + fInt(doc) + '</div><div class="s">' + fPct(div(doc, trab)) + ' das trabalhadas</div></div>'
+    + '<div class="kpi"><div class="n">Contas aprovadas</div><div class="v">' + fInt(aprov) + '</div><div class="s">' + fPct(div(aprov, nB)) + ' das contas no mailing</div></div>'
+    + '<div class="kpi"><div class="n">Pendentes de documento hoje</div><div class="v">' + fInt(pendHoje) + '</div><div class="s">na Visão Cliente; ' + fInt(F.length) + ' nunca entraram no mailing</div></div>'
+    + '</div>';
+  h += '<div class="card"><div class="bar-head"><div><h2>Funil da pendência de documentos</h2><p class="hint" style="margin:0">Contas dos mailings de pendência (PEN_DOC) que entraram no mês atual e no anterior, por mês da primeira entrada. Cada conta conta uma vez; o resultado é a melhor tabulação dela depois da entrada (documento enviado, recusa, negociação) e a situação vem da última foto da Visão Cliente.</p></div>'
+    + '<button class="btn ghost" id="btnPendXlsx">Baixar contas (Excel)</button></div>'
+    + '<div class="tscroll"><table class="x funil"><thead><tr><th>Etapa</th>' + meses.map(m => '<th class="num">Entrada ' + fMesAno(m) + '</th>').join("") + '<th class="num tot">Total</th><th class="num">% das contas</th></tr></thead><tbody>';
+  P_FUNIL.forEach(([nome, f, cl, dica]) => {
+    const tot = C.filter(f).length;
+    h += '<tr' + (cl ? ' class="' + (cl === "aux" ? "aux" : "destaque") + '"' : '') + '><td class="name"' + (dica ? ' title="' + esc(dica) + '"' : '') + '>' + (cl === "b" ? '<b>' + esc(nome) + '</b>' : esc(nome)) + '</td>'
+      + meses.map(m => '<td class="num">' + fInt(C.filter(r => r.MES_ENTRADA === m && f(r)).length) + '</td>').join("")
+      + '<td class="num tot"><b>' + fInt(tot) + '</b></td><td class="num">' + fPct(div(tot, nB)) + '</td></tr>';
+  });
+  h += '</tbody></table></div><p class="legend2" style="margin:8px 0 0">Passe o mouse no nome da etapa para ver a regra. A pendência não tem campanha no discador: o trabalho é manual e por WhatsApp, registrado no CRM.</p></div>';
+  /* dia a dia */
+  const DM = {}, dd = k => DM[k] || (DM[k] = { DIA:k, NOVOS:0, ATENDIMENTOS:0, TRAB:0, WPP:0, CE:0, NEG:0, REC:0, DOC:0, APROV:0 });
+  C.forEach(r => {
+    if (r.DT_ENTRADA_MAILING) dd(r.DT_ENTRADA_MAILING).NOVOS++;
+    if (r.DT_PRIMEIRO_ATENDIMENTO) dd(r.DT_PRIMEIRO_ATENDIMENTO).TRAB++;
+    if (r.DT_PRIMEIRO_WPP) dd(r.DT_PRIMEIRO_WPP).WPP++;
+    if (r.DT_PRIMEIRO_CE) dd(r.DT_PRIMEIRO_CE).CE++;
+    if (r.RESULTADO === "NEGOCIACAO" && r.DT_NEGOCIACAO) dd(r.DT_NEGOCIACAO).NEG++;
+    if (r.RESULTADO === "RECUSA" && r.DT_RECUSA) dd(r.DT_RECUSA).REC++;
+    if (r.RESULTADO === "DOC ENVIADO" && r.DT_DOC_ENVIADO) dd(r.DT_DOC_ENVIADO).DOC++;
+    if (r.SITUACAO_C6 === "APROVADA" && r.DT_CONTA_CRIADA) dd(r.DT_CONTA_CRIADA).APROV++;
+  });
+  (S.pendD || []).forEach(d => { if (d.DIA >= iniVig && d.ATENDIMENTOS) dd(d.DIA).ATENDIMENTOS = d.ATENDIMENTOS; });
+  const temCE = C.some(r => r.DT_PRIMEIRO_CE);
+  const D = Object.values(DM).filter(d => d.DIA >= iniVig && P_DIA.some(([k]) => d[k])).sort((a, b) => b.DIA.localeCompare(a.DIA));
+  const T = {}; P_DIA.forEach(([k]) => T[k] = D.reduce((s, d) => s + d[k], 0));
+  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Sem duplicidade: cada conta conta uma vez, no primeiro dia em que chegou à etapa, e o total bate com o funil. CNPJs na carga = só a primeira vez que o CNPJ veio num mailing PEN_DOC (reenvios do C6 não contam). Negociação e recusa seguem o resultado final da conta no funil. Só aparecem dias com movimento.' + (temCE ? '' : ' Para WhatsApp, contato efetivo, negociação e recusa, rode a versão nova da query.') + '</p>'
+    + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + P_DIA.map(([, t]) => '<th class="num">' + esc(t) + '</th>').join("") + '</tr></thead><tbody>'
+    + '<tr class="destaque"><td class="name"><b>Total</b></td>' + P_DIA.map(([k]) => '<td class="num"><b>' + fInt(T[k]) + '</b></td>').join("") + '</tr>'
+    + D.map(d => '<tr><td class="name">' + fDia(d.DIA) + ' ' + DSEM[dow(d.DIA)] + '</td>' + P_DIA.map(([k]) => '<td class="num">' + (d[k] ? fInt(d[k]) : '<span style="color:var(--muted)">–</span>') + '</td>').join("") + '</tr>').join("")
+    + '</tbody></table></div></div>';
+  v.innerHTML = h;
+  $("#btnPendXlsx").onclick = () => {
+    const out = C.concat(F).map(r => ({ CNPJ:r.CNPJ_PEND, "No mailing":r.NO_MAILING === 1 ? "sim" : "não", "1ª entrada":fDiaAno(r.DT_ENTRADA_MAILING), "Última carga":fDiaAno(r.DT_ULTIMO_MAILING), "Cargas":r.MAILINGS,
+      "Status da abertura":r.STATUS_ABERTURA, "Status do lead":r.STATUS_LEAD, "Conta criada":fDiaAno(r.DT_CONTA_CRIADA), "Situação C6":r.SITUACAO_C6,
+      "Atendimentos":r.TENTATIVAS, "1º atendimento":fDiaAno(r.DT_PRIMEIRO_ATENDIMENTO), "Resultado":r.RESULTADO, "Doc enviado em":fDiaAno(r.DT_DOC_ENVIADO) }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out), "Contas"); XLSX.writeFile(wb, "Pendencia_doc_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+  };
+}
+
 function renderProj(){
   const YM = S.mes || mesDe(S.corte);
   const uteis = diasUteis(YM), corte = S.corte;
@@ -864,7 +1169,7 @@ async function handleFile(file, persist){
   const up = $("#btnUp"); up.disabled = true;
   try {
     toast("Lendo " + file.name + "…");
-    const enc = encode(await readFile(file));
+    const enc = encodeAll(await readFile(file), S.enc);
     if (!encLen(enc)) throw new Error("O arquivo não tem linhas com DATA válida.");
     if (persist && logged){
       toast("Publicando a base para todos que abrem o painel…");
@@ -1043,6 +1348,37 @@ async function syncBase(silent){
   setInterval(() => { if (logged && document.visibilityState === "visible") syncBase(true); }, 60 * 1000);
   document.addEventListener("visibilitychange", () => { if (logged && document.visibilityState === "visible") syncBase(true); });
 })();
+})();
+</script>
+<script>
+/* tema C6: numeros que sobem e barras no % das tabelas do funil */
+(() => {
+  const red = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const parse = t => { const m = t.match(/^([^\d-]*)(-?[\d.]+(?:,\d+)?)(.*)$/); if (!m) return null;
+    const dec = (m[2].split(",")[1] || "").length; return { pre:m[1], v:parseFloat(m[2].replace(/\./g, "").replace(",", ".")), dec, suf:m[3] }; };
+  const fmt = (v, dec) => v.toLocaleString("pt-BR", { minimumFractionDigits:dec, maximumFractionDigits:dec });
+  function countUp(el){
+    if (el.dataset.anim) return; const t = el.textContent.trim(); if (el.dataset.c6 === t) return; el.dataset.c6 = t;
+    const p = parse(t); if (!p || red || !isFinite(p.v)) return;
+    el.dataset.anim = "1";
+    const t0 = performance.now(), dur = 700;
+    const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = p.pre + fmt(p.v * e, p.dec) + p.suf; if (k < 1) requestAnimationFrame(step); else { el.textContent = t; delete el.dataset.anim; } };
+    requestAnimationFrame(step);
+  }
+  function bars(root){
+    root.querySelectorAll("table.funil").forEach(tb => {
+      const ths = Array.from(tb.querySelectorAll("thead tr:last-child th")); const i = ths.findIndex(th => /^%/.test(th.textContent.trim()));
+      if (i < 0) return;
+      tb.querySelectorAll("tbody tr").forEach(tr => { const td = tr.children[i]; if (!td || td.classList.contains("c6bar")) return;
+        const p = parse(td.textContent.trim()); if (!p || !/%/.test(p.suf)) return;
+        td.classList.add("c6bar"); td.style.setProperty("--w", "0%");
+        requestAnimationFrame(() => requestAnimationFrame(() => td.style.setProperty("--w", Math.max(0, Math.min(100, p.v)) + "%"))); });
+    });
+  }
+  let pend = false;
+  const run = () => { pend = false; document.querySelectorAll(".kpi .v, .stage .val, .spcard .v").forEach(countUp); bars(document); };
+  new MutationObserver(() => { if (!pend){ pend = true; requestAnimationFrame(run); } }).observe(document.getElementById("app"), { childList:true, subtree:true });
 })();
 </script>
 </body>
