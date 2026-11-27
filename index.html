@@ -539,10 +539,15 @@ const dow = iso => new Date(iso + "T12:00:00").getDay();
 
 /* rentabilizacao: contas do balde ativo (saida 1) e dia a dia (saida 2) da query C6_CXPJ_RENTABILIZACAO_FUNIL */
 const RC_TXT = ["CNPJ_RENTA","MES_CONTA","DT_CONTA_CRIADA","STATUS_CONTA","DT_ENTRADA_MAILING","DT_PRIMEIRA_DISCAGEM","RESULTADO","DT_PRIMEIRO_CONTATO"];
-const RC_NUM = ["COM_LEAD","DISCADO","TENTATIVAS","TRAB_CRM","BLOCKLIST","ALO","WPP","CE_VOZ","CE_WPP"];
-const RD_NUM = ["MAILING_ENTRADA","MAILING_ENTRADA_BALDE","CONTAS_ABERTAS","DISCAGENS","CNPJS_DISCADOS","ALO","CONTATO_EFETIVO_VOZ","CONVERSA_WPP","AGEND_NEGOCIACAO","RECUSA","CESTA","AGENDAMENTO"];
+/* datas da 1a vez em cada etapa (dia a dia sem duplicidade); ficam depois de RC_NUM para nao quebrar a base ja gravada */
+const RC_TXT2 = ["DT_PRIMEIRO_DISPARO","DT_PRIMEIRO_TRABALHO","DT_PRIMEIRO_ALO","DT_CE_VOZ","DT_CE_WPP","DT_RESULTADO","DT_PRIMEIRA_RESPOSTA"];
+const RC_NUM = ["COM_LEAD","DISCADO","TENTATIVAS","TRAB_CRM","BLOCKLIST","ALO","WPP","CE_VOZ","CE_WPP","WPP_DISPARO","WPP_RESPONDEU"];
+/* spin: tentativas por conta limitadas a SPIN_MAX (definicao de acompanhamento combinada com a operacao) */
+const SPIN_MAX = 16;
+const RD_NUM = ["MAILING_ENTRADA","MAILING_ENTRADA_BALDE","CONTAS_ABERTAS","DISCAGENS","CNPJS_DISCADOS","ALO","CONTATO_EFETIVO_VOZ","CONVERSA_WPP","AGEND_NEGOCIACAO","RECUSA","CESTA","AGENDAMENTO","WPP_DISPAROS","WPP_RESPOSTAS","DISCAGENS_SPIN","CNPJS_SPIN"];
 const RA_TXT = ["CNPJ_AGEND","DT_TABULACAO","STATUS_ABERTURA","DT_AGENDAMENTO","TELEFONE_AGENDAMENTO","DT_ENTRADA_MAILING","DT_PRIMEIRA_DISCAGEM","SITUACAO_AGEND"];
 const RA_NUM = ["COM_LEAD","TENTATIVAS_NO_DIA"];
+const RA_TXT2 = ["MOTIVO_PENDENCIA"];   /* depois de RA_NUM para nao quebrar a base gravada */
 /* "AAAA-MM-DD HH:MM" a partir de numero de serie do Excel, Date ou texto (AAAA-MM-DD HH:MM ou DD/MM/AAAA HH:MM) */
 function dataHora(v){
   if (v == null || v === "") return "";
@@ -560,14 +565,14 @@ function encodeRenta(rC, rD, rA){
   if (!rC) return null;
   const km = {}; Object.keys(rC[0]).forEach(k => km[normKey(k)] = k);
   const c = rC.filter(r => clean(r[km.CNPJ_RENTA])).map(r => RC_TXT.map(n => /^DT_/.test(n) ? toISO(r[km[n]]) : n === "MES_CONTA" ? clean(r[km[n]]).slice(0, 7) : clean(r[km[n]]))
-    .concat(RC_NUM.map(n => km[n] ? num(r[km[n]]) : 0)));
+    .concat(RC_NUM.map(n => km[n] ? num(r[km[n]]) : 0)).concat(RC_TXT2.map(n => km[n] ? toISO(r[km[n]]) : null)));
   let d = [];
   if (rD && rD.length){ const kd = {}; Object.keys(rD[0]).forEach(k => kd[normKey(k)] = k);
     d = rD.map(r => [toISO(r[kd.DIA_RENTA])].concat(RD_NUM.map(n => kd[n] ? num(r[kd[n]]) : 0))).filter(a => a[0]); }
   let a = null;
   if (rA && rA.length){ const ka = {}; Object.keys(rA[0]).forEach(k => ka[normKey(k)] = k);
     a = rA.filter(r => clean(r[ka.CNPJ_AGEND])).map(r => RA_TXT.map(n => n === "DT_AGENDAMENTO" ? dataHora(r[ka[n]])
-      : /^DT_/.test(n) ? toISO(r[ka[n]]) : clean(r[ka[n]])).concat(RA_NUM.map(n => ka[n] ? num(r[ka[n]]) : 0))); }
+      : /^DT_/.test(n) ? toISO(r[ka[n]]) : clean(r[ka[n]])).concat(RA_NUM.map(n => ka[n] ? num(r[ka[n]]) : 0)).concat(RA_TXT2.map(n => ka[n] ? clean(r[ka[n]]) : null))); }
   return { c, d, a, em:new Date().toISOString() };
 }
 /* pendencia doc: saidas da query C6_CXPJ_PENDENCIA_DOC_FUNIL */
@@ -621,8 +626,8 @@ function load(enc, meta){
   /* bases antigas (sem colunas novas, ex. DISCAGEM_COMPLETADA) entram com 0 */
   (enc.rows || []).forEach(r => NUMS.forEach(n => { if (r[n] == null || isNaN(r[n])) r[n] = 0; }));
   S.rows = enc.rows; S.meta = meta || S.meta; S.enc = enc;
-  S.rentaC = enc.renta ? enc.renta.c.map(a => { const o = {}; RC_TXT.forEach((n, i) => o[n] = a[i]); RC_NUM.forEach((n, i) => o[n] = a[RC_TXT.length + i]); return o; }) : null;
-  S.rentaA = enc.renta && enc.renta.a ? enc.renta.a.map(a => { const o = {}; RA_TXT.forEach((n, i) => o[n] = a[i]); o.DT_AGENDAMENTO = dataHora(o.DT_AGENDAMENTO); RA_NUM.forEach((n, i) => o[n] = a[RA_TXT.length + i]); return o; }) : null;
+  S.rentaC = enc.renta ? enc.renta.c.map(a => { const o = {}; RC_TXT.forEach((n, i) => o[n] = a[i]); RC_NUM.forEach((n, i) => o[n] = a[RC_TXT.length + i]); RC_TXT2.forEach((n, i) => o[n] = a[RC_TXT.length + RC_NUM.length + i]); return o; }) : null;
+  S.rentaA = enc.renta && enc.renta.a ? enc.renta.a.map(a => { const o = {}; RA_TXT.forEach((n, i) => o[n] = a[i]); o.DT_AGENDAMENTO = dataHora(o.DT_AGENDAMENTO); RA_NUM.forEach((n, i) => o[n] = a[RA_TXT.length + i]); RA_TXT2.forEach((n, i) => o[n] = a[RA_TXT.length + RA_NUM.length + i]); return o; }) : null;
   S.rentaD = enc.renta ? enc.renta.d.map(a => { const o = { DIA:a[0] }; RD_NUM.forEach((n, i) => o[n] = a[1 + i]); return o; }) : null;
   S.pendC = enc.pend ? enc.pend.c.map(a => { const o = {}; PC_TXT.forEach((n, i) => o[n] = a[i]); PC_NUM.forEach((n, i) => o[n] = a[PC_TXT.length + i]); return o; }) : null;
   S.pendD = enc.pend ? enc.pend.d.map(a => { const o = { DIA:a[0] }; PD_NUM.forEach((n, i) => o[n] = a[1 + i]); return o; }) : null;
@@ -816,12 +821,16 @@ const DIA_IND = [
   ["Contato efetivo/Alô (%)",          a => div(a.CONTATO_EFETIVO_NOVO, a.ALO_NOVO), "pct", "taxa"],
   ["Tabulações Finalizadoras",         a => a.CPC_NOVO, "int"],
   ["Finalizações/Contato efetivo (%)", a => div(a.CPC_NOVO, a.CONTATO_EFETIVO_NOVO), "pct", "taxa"],
-  ["Vendas mailing",                   a => a.VENDAS_NOVO, "int"],
+  /* vendas cantadas x contas abertas (pedido C6, 27/11): cantada = venda tabulada no CRM; contas abertas = Visao Cliente */
+  ["Vendas cantadas mailing",          a => a.VENDAS_NOVO, "int"],
   ["Vendas indicação",                 a => a.VENDAS_INDICACAO, "int"],
-  ["Vendas total",                     a => a.VENDAS_NOVO + a.VENDAS_INDICACAO, "int", "destaque"],
-  ["Contas abertas (Visão Cliente)",   a => a.VENDAS_VCLI + a.VENDAS_VCLI_FORA, "int", "vcli"],
-  ["Contas abertas (localizadas)",     a => a.VENDAS_LOCALIZADAS, "int", "loc"],
-  ["Contas abertas após tabulação (%)", a => div(a.VENDAS_LOCALIZADAS, a.VENDAS_NOVO), "pct", "loc"],
+  ["Vendas cantadas total",            a => a.VENDAS_NOVO + a.VENDAS_INDICACAO, "int", "destaque"],
+  ["Contas abertas Visão Cliente",     a => a.VENDAS_VCLI + a.VENDAS_VCLI_FORA, "int", "vcli"],
+  ["Contas abertas x cantadas",        a => a.VENDAS_LOCALIZADAS + a.INDICACAO_LOCALIZADA, "int", "loc"],
+  ["Contas abertas x cantadas (%)",    a => div(a.VENDAS_LOCALIZADAS + a.INDICACAO_LOCALIZADA, a.VENDAS_VCLI + a.VENDAS_VCLI_FORA), "pct", "loc"],
+  ["Contas abertas sem venda tabulada", a => Math.max(0, a.VENDAS_VCLI + a.VENDAS_VCLI_FORA - a.VENDAS_LOCALIZADAS - a.INDICACAO_LOCALIZADA), "int", "loc"],
+  ["Indicações com conta aberta",      a => a.INDICACAO_LOCALIZADA, "int", "loc"],
+  ["Indicações com conta aberta (%)",  a => div(a.INDICACAO_LOCALIZADA, a.VENDAS_INDICACAO), "pct", "loc"],
   ["Conversão/Total alôs",             a => div(a.VENDAS_NOVO, a.ATENDIDAS), "pct2", "taxa"],
   ["Conversão/Contato Efetivo",        a => div(a.VENDAS_NOVO, a.CONTATO_EFETIVO_NOVO), "pct2", "taxa"],
   ["Conversão/Tab. Finalizadoras",     a => div(a.VENDAS_NOVO, a.CPC_NOVO), "pct2", "taxa"],
@@ -936,6 +945,8 @@ const R_FUNIL = [
   ["Trabalhado discador qualificação", r => r.DISCADO === 1 || r.TRAB_CRM === 1, "", "Conta discada na campanha 1010 ou com atendimento no CRM da rentabilização (manual ou WhatsApp)."],
   ["Alô para humano", r => r.ALO === 1, "", "Ligação que chegou a um agente (discador ou atendimento por voz no CRM)."],
   ["Sem alô e com WhatsApp", r => r.ALO !== 1 && r.WPP === 1, "", ""],
+  ["WhatsApp disparado", r => r.WPP_DISPARO === 1, "", "Conta com conversa de WhatsApp iniciada pela operação na Connecta (operador ou disparo em massa), ligada à conta pelo telefone.", "wpp"],
+  ["Respondeu o WhatsApp", r => r.WPP_RESPONDEU === 1, "", "Conta em que o cliente mandou pelo menos 1 mensagem na conversa.", "wpp"],
   ["Contato efetivo voz", r => r.CE_VOZ === 1, "", "Atuação, em negociação, recusa ou cesta completa por voz."],
   ["Conversa ativa WhatsApp", r => r.CE_VOZ !== 1 && r.CE_WPP === 1, "", "Contato efetivo só pelo WhatsApp."],
   ["Agendamento com negociação", r => r.RESULTADO === "ATUACAO" || r.RESULTADO === "PROMESSA", "", "Atuação (chave PIX, boleto, cartão, C6 Pay) ou promessa."],
@@ -946,8 +957,8 @@ const R_FUNIL = [
   ["Contas disponíveis para discagem, sem trabalhar", r => r.DISCADO !== 1 && r.TRAB_CRM !== 1 && r.BLOCKLIST !== 1, "f", ""],
   ["Das disponíveis: sem lead na qualificação", r => r.DISCADO !== 1 && r.TRAB_CRM !== 1 && r.BLOCKLIST !== 1 && r.COM_LEAD !== 1, "aux", "Conta aberta que não entrou no mailing da rentabilização."]
 ];
-const R_DIA = [["MAILING_ENTRADA","Entrada de mailing"],["MAILING_ENTRADA_BALDE","dos quais do balde"],["CONTAS_ABERTAS","Contas abertas"],["DISCAGENS","Discagens"],["CNPJS_DISCADOS","Contas discadas"],
-  ["ALO","Alô"],["CONTATO_EFETIVO_VOZ","Contato efetivo voz"],["CONVERSA_WPP","Conversa WhatsApp"],["AGEND_NEGOCIACAO","Agendamento Encarteirado"],["RECUSA","Recusa"],["CESTA","Cesta completa"],["AGENDAMENTO","Agend. em aberto"]];
+const R_DIA = [["MAILING_ENTRADA","Entrada de mailing"],["MAILING_ENTRADA_BALDE","dos quais do balde"],["CONTAS_ABERTAS","Contas abertas"],["CNPJS_DISCADOS","Discagens"],["SPIN","Spin"],
+  ["ALO","Alô"],["CONTATO_EFETIVO_VOZ","Contato efetivo voz"],["CONVERSA_WPP","Conversa WhatsApp"],["WPP_DISPAROS","WhatsApp disparado"],["WPP_RESPOSTAS","Respondeu WhatsApp"],["AGEND_NEGOCIACAO","Agendamento Encarteirado"],["RECUSA","Recusa"],["CESTA","Cesta completa"],["AGENDAMENTO","Agend. em aberto"]];
 function renderRenta(){
   const v = $("#v_renta");
   if (!S.rentaC){ v.innerHTML = '<div class="card"><h2>Rentabilização</h2><p class="hint" style="margin:0">A base carregada não tem as abas da rentabilização. Rode a query <b>C6_CXPJ_RENTABILIZACAO_FUNIL</b> e cole as três saídas como abas no Excel do funil (ou suba um Excel só com essas duas abas: o painel mantém o funil que já está publicado).</p></div>'; return; }
@@ -957,11 +968,27 @@ function renderRenta(){
   let h = '<div class="card"><div class="bar-head"><div><h2>Funil da rentabilização · balde ativo</h2><p class="hint" style="margin:0">Balde = contas abertas no mês atual e no anterior (a conta pode ser acionada até o fim do mês seguinte ao da abertura). Cada conta conta uma vez; o resultado é a melhor tabulação dela: cesta, atuação, promessa, recusa e agendamento.</p></div>'
     + '<button class="btn ghost" id="btnRentaXlsx">Baixar contas (Excel)</button></div>'
     + '<div class="tscroll"><table class="x funil"><thead><tr><th>Etapa</th>' + meses.map(m => '<th class="num">Contas ' + fMesAno(m) + '</th>').join("") + '<th class="num tot">Total</th><th class="num">% do balde</th></tr></thead><tbody>';
-  R_FUNIL.forEach(([nome, f, cl, dica]) => {
+  const temWpp = C.some(r => r.WPP_DISPARO != null);
+  R_FUNIL.forEach(([nome, f, cl, dica, tag], ix) => {
+    if (tag === "wpp" && !temWpp) return;
     const tot = C.filter(f).length;
     h += '<tr' + (cl ? ' class="' + (cl === "b" ? "destaque" : cl === "f" ? "destaque" : "aux") + '"' : '') + '><td class="name"' + (dica ? ' title="' + esc(dica) + '"' : '') + '>' + (cl === "b" ? '<b>' + esc(nome) + '</b>' : esc(nome)) + '</td>'
       + meses.map(m => '<td class="num">' + fInt(C.filter(r => r.MES_CONTA === m && f(r)).length) + '</td>').join("")
       + '<td class="num tot"><b>' + fInt(tot) + '</b></td><td class="num">' + fPct(div(tot, nB)) + '</td></tr>';
+    if (nome === "Respondeu o WhatsApp"){ /* retorno = respondeu / disparado */
+      const rt = l => div(l.filter(r => r.WPP_RESPONDEU === 1).length, l.filter(r => r.WPP_DISPARO === 1).length);
+      const fr = v => isFinite(v) ? fPct(v) : '<span style="color:var(--muted)">–</span>';
+      h += '<tr class="aux"><td class="name" title="Contas que responderam ÷ contas que receberam disparo.">Retorno do WhatsApp (respondeu ÷ disparado)</td>'
+        + meses.map(m => '<td class="num">' + fr(rt(C.filter(r => r.MES_CONTA === m))) + '</td>').join("")
+        + '<td class="num tot"><b>' + fr(rt(C)) + '</b></td><td class="num"></td></tr>';
+    }
+    if (ix === 1){ /* spin logo abaixo de "Trabalhado discador qualificacao" */
+      const sp = l => { const d = l.filter(r => r.DISCADO === 1); return div(d.reduce((s2, r) => s2 + Math.min(r.TENTATIVAS || 0, SPIN_MAX), 0), d.length); };
+      const fs = v => isFinite(v) && v ? fDec(v) : '<span style="color:var(--muted)">–</span>';
+      h += '<tr class="aux"><td class="name" title="Discagens da campanha 1010 ÷ contas discadas. Cada conta conta no máximo ' + SPIN_MAX + ' tentativas.">Spin (discagens por conta discada, até ' + SPIN_MAX + ' por conta)</td>'
+        + meses.map(m => '<td class="num">' + fs(sp(C.filter(r => r.MES_CONTA === m))) + '</td>').join("")
+        + '<td class="num tot"><b>' + fs(sp(C)) + '</b></td><td class="num"></td></tr>';
+    }
   });
   h += '</tbody></table></div><p class="legend2" style="margin:8px 0 0">Passe o mouse no nome da etapa para ver a regra. Lead na blocklist e contas disponíveis contam só as contas não trabalhadas; Balde = trabalhado + blocklist + disponíveis.</p></div>';
   /* leads originados de abertura OK com agendamento */
@@ -976,21 +1003,72 @@ function renderRenta(){
       + '<div class="kpi"><div class="n">Aberturas com agendamento</div><div class="v">' + fInt(A.length) + '</div><div class="s">' + fInt(comLead) + ' viraram lead na rentabilização</div></div>'
       + SIT.map(([k, t]) => { const n = cnt(A, k); return '<div class="kpi"><div class="n">' + t + '</div><div class="v">' + fInt(n) + '</div><div class="s">'
           + (k === "SEM LEAD" ? fPct(div(n, A.length)) + ' das aberturas agendadas' : k === "AGENDAMENTO FUTURO" ? 'agendamento depois de hoje' : fPct(div(n, venc)) + ' dos leads') + '</div></div>'; }).join("")
-      + '</div></div>';
+      + '</div>' + (() => { /* motivo das pendencias de discagem (base nova) */
+        const P = A.filter(x => x.SITUACAO_AGEND === "PENDENTE DE DISCAGEM"); if (!P.length || !P.some(x => x.MOTIVO_PENDENCIA)) return "";
+        const M = {}; P.forEach(x => { const m = x.MOTIVO_PENDENCIA || "SEM MOTIVO"; M[m] = (M[m] || 0) + 1; });
+        const L = Object.entries(M).sort((a, b) => b[1] - a[1]);
+        const nm = m => ({"LEAD ENTROU NO MAILING DEPOIS DA DATA AGENDADA":"Lead entrou no mailing depois da data agendada","LEAD SEM TELEFONE":"Lead sem telefone","TELEFONE NA BLOCKLIST DO C6":"Telefone na blocklist do C6","DISCADO ANTES DA TABULACAO, SEM NOVA DISCAGEM":"Discado antes da tabulação, sem nova discagem","NO MAILING, AINDA NAO DISCADO":"No mailing, ainda não discado (fila do discador)"})[m] || m;
+        return '<h3 style="margin:4px 0 6px;font-size:14px">Motivo das pendências de discagem</h3><table class="x fit"><thead><tr><th>Motivo</th><th class="num">Leads</th><th class="num">%</th></tr></thead><tbody>'
+          + L.map(([m, q]) => '<tr><td class="name">' + esc(nm(m)) + '</td><td class="num">' + fInt(q) + '</td><td class="num">' + fPct(div(q, P.length)) + '</td></tr>').join("") + '</tbody></table>'; })()
+      + '</div>';
   }
+  /* dia a dia SEM DUPLICIDADE (base nova): cada conta do balde conta uma vez, no 1o dia em que chegou a etapa.
+     Total = mesmo numero do funil. Base antiga (sem as datas): volta para a saida 2 da query. */
+  const novo = C.some(r => r.DT_PRIMEIRO_TRABALHO != null);
+  const temW = C.some(r => r.WPP_DISPARO != null);
+  const resN = r => r.RESULTADO === "ATUACAO" || r.RESULTADO === "PROMESSA";
+  const RD2 = [
+    ["ENT", "Entrada de mailing", r => r.COM_LEAD === 1, "DT_ENTRADA_MAILING"],
+    ["ABR", "Contas abertas", r => true, "DT_CONTA_CRIADA"],
+    ["TRAB", "Discagens", r => r.DISCADO === 1 || r.TRAB_CRM === 1, "DT_PRIMEIRO_TRABALHO"],
+    ["SPIN", "Spin"],
+    ["ALO", "Alô", r => r.ALO === 1, "DT_PRIMEIRO_ALO"],
+    ["CEV", "Contato efetivo voz", r => r.CE_VOZ === 1, "DT_CE_VOZ"],
+    ["CEW", "Conversa WhatsApp", r => r.CE_VOZ !== 1 && r.CE_WPP === 1, "DT_CE_WPP"],
+    ["WD", "WhatsApp disparado", r => r.WPP_DISPARO === 1, "DT_PRIMEIRO_DISPARO", "wpp"],
+    ["WR", "Respondeu WhatsApp", r => r.WPP_RESPONDEU === 1, "DT_PRIMEIRA_RESPOSTA", "wpp"],
+    ["NEG", "Agendamento Encarteirado", resN, "DT_RESULTADO"],
+    ["REC", "Recusa", r => r.RESULTADO === "RECUSA", "DT_RESULTADO"],
+    ["CES", "Cesta completa", r => r.RESULTADO === "CESTA", "DT_RESULTADO"],
+    ["AGA", "Agend. em aberto", r => r.RESULTADO === "AGENDAMENTO", "DT_RESULTADO"]].filter(c => c[4] !== "wpp" || temW);
+  const spinL = l => div(l.reduce((a, r) => a + Math.min(r.TENTATIVAS || 0, SPIN_MAX), 0), l.length);
+  const spinFunil = spinL(C.filter(r => r.DISCADO === 1));
+  const fs = (v, b) => isFinite(v) && v ? (b ? '<b>' : '') + fDec(v) + (b ? '</b>' : '') : '<span style="color:var(--muted)">–</span>';
+  if (novo){
+    const M = {};
+    const add = (dia, k) => { if (!dia) return; (M[dia] = M[dia] || {})[k] = (M[dia][k] || 0) + 1; };
+    C.forEach(r => RD2.forEach(([k, , f, dc]) => { if (f && f(r)) add(r[dc], k); }));
+    const disc1 = {}; C.forEach(r => { if (r.DISCADO === 1 && r.DT_PRIMEIRA_DISCAGEM) (disc1[r.DT_PRIMEIRA_DISCAGEM] = disc1[r.DT_PRIMEIRA_DISCAGEM] || []).push(r); });
+    const dias = Object.keys(M).concat(Object.keys(disc1)).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => b.localeCompare(a));
+    const T2 = {}; RD2.forEach(([k, , f]) => T2[k] = f ? C.filter(f).length : 0);
+    h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Sem duplicidade: cada conta do balde conta uma vez, no primeiro dia em que chegou à etapa, e o total bate com o funil. Discagens = contas trabalhadas pela primeira vez no dia (discador ou CRM). Spin do dia = tentativas das contas discadas pela primeira vez no dia ÷ essas contas, com no máximo 16 tentativas por conta. Agendamento, recusa, cesta e agendamento em aberto seguem o resultado final da conta, no dia em que ele aconteceu. Só aparecem dias com movimento.</p>'
+      + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + RD2.map(c => '<th class="num">' + esc(c[1]) + '</th>').join("") + '</tr></thead><tbody>'
+      + '<tr class="destaque"><td class="name"><b>Total</b></td>' + RD2.map(([k]) => '<td class="num">' + (k === "SPIN" ? fs(spinFunil, 1) : '<b>' + fInt(T2[k]) + '</b>') + '</td>').join("") + '</tr>'
+      + dias.map(d => '<tr><td class="name">' + fDia(d) + ' ' + DSEM[dow(d)] + '</td>' + RD2.map(([k]) => '<td class="num">'
+          + (k === "SPIN" ? fs(disc1[d] ? spinL(disc1[d]) : NaN) : ((M[d] || {})[k] ? fInt(M[d][k]) : '<span style="color:var(--muted)">–</span>')) + '</td>').join("") + '</tr>').join("")
+      + '</tbody></table></div></div>';
+  } else {
   /* dia a dia: uma linha por dia, so dias com movimento */
   const D = (S.rentaD || []).filter(d => R_DIA.some(([k]) => d[k])).sort((a, b) => b.DIA.localeCompare(a.DIA));
-  const T = {}; R_DIA.forEach(([k]) => T[k] = D.reduce((s, d) => s + d[k], 0));
-  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Entrada de mailing = contas que entraram no mailing da rentabilização pela primeira vez no dia. Demais colunas = contas distintas com a etapa no dia (toda a rentabilização, não só o balde). Só aparecem dias com movimento.</p>'
+  const T = {}; R_DIA.forEach(([k]) => T[k] = k === "SPIN" ? 0 : D.reduce((s, d) => s + (d[k] || 0), 0));
+  /* spin do dia = discagens do dia / contas discadas no dia.
+     Linha Total = MESMO spin do funil (tentativas acumuladas / contas discadas do balde, cada conta 1 vez).
+     Somar as contas discadas de cada dia contaria a mesma conta varias vezes e o total nao bateria com o funil. */
+  const spinFunil = (() => { const d = (S.rentaC || []).filter(r => r.DISCADO === 1); return div(d.reduce((a, r) => a + Math.min(r.TENTATIVAS || 0, SPIN_MAX), 0), d.length); })();
+  T.SPIN_F = spinFunil;
+  /* dia: tentativas que entram no spin (cada conta ate SPIN_MAX no acumulado) / contas com tentativa contada no dia; base antiga sem essas colunas: limita o resultado */
+  const spin = d => d === T ? d.SPIN_F : Math.min(div(d.DISCAGENS_SPIN != null ? d.DISCAGENS_SPIN : d.DISCAGENS, d.CNPJS_DISCADOS), SPIN_MAX), cel = (d, k, b) => k === "SPIN" ? (isFinite(spin(d)) && spin(d) ? (b ? '<b>' : '') + fDec(spin(d)) + (b ? '</b>' : '') : '<span style="color:var(--muted)">–</span>') : null;
+  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Entrada de mailing = contas que entraram no mailing da rentabilização pela primeira vez no dia. Demais colunas = contas distintas com a etapa no dia (toda a rentabilização, não só o balde). Só aparecem dias com movimento. Spin do dia = discagens ÷ contas discadas no dia; na linha Total, o spin é o mesmo do funil (discagens acumuladas ÷ contas discadas do balde, cada conta uma vez). O spin considera no máximo 16 tentativas por conta no acumulado: depois da 16ª tentativa, as discagens da conta deixam de entrar.</p>'
     + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + R_DIA.map(([, t]) => '<th class="num">' + esc(t) + '</th>').join("") + '</tr></thead><tbody>'
-    + '<tr class="destaque"><td class="name"><b>Total</b></td>' + R_DIA.map(([k]) => '<td class="num"><b>' + fInt(T[k]) + '</b></td>').join("") + '</tr>'
-    + D.map(d => '<tr><td class="name">' + fDia(d.DIA) + ' ' + DSEM[dow(d.DIA)] + '</td>' + R_DIA.map(([k]) => '<td class="num">' + (d[k] ? fInt(d[k]) : '<span style="color:var(--muted)">–</span>') + '</td>').join("") + '</tr>').join("")
+    + '<tr class="destaque"><td class="name"><b>Total</b></td>' + R_DIA.map(([k]) => '<td class="num">' + (cel(T, k, 1) || '<b>' + fInt(T[k]) + '</b>') + '</td>').join("") + '</tr>'
+    + D.map(d => '<tr><td class="name">' + fDia(d.DIA) + ' ' + DSEM[dow(d.DIA)] + '</td>' + R_DIA.map(([k]) => '<td class="num">' + (cel(d, k) || (d[k] ? fInt(d[k]) : '<span style="color:var(--muted)">–</span>')) + '</td>').join("") + '</tr>').join("")
     + '</tbody></table></div></div>';
+  }
   v.innerHTML = h;
   const ba = $("#btnAgdXlsx"); if (ba) ba.onclick = () => {
     const out = S.rentaA.filter(x => x.SITUACAO_AGEND === "PENDENTE DE DISCAGEM" || x.SITUACAO_AGEND === "DISCADO EM OUTRO DIA").map(x => ({ CNPJ:x.CNPJ_AGEND, "Tabulação":fDiaAno(x.DT_TABULACAO), "Status da abertura":x.STATUS_ABERTURA,
       "Agendamento":x.DT_AGENDAMENTO ? x.DT_AGENDAMENTO.slice(8, 10) + "/" + x.DT_AGENDAMENTO.slice(5, 7) + "/" + x.DT_AGENDAMENTO.slice(0, 4) + " " + x.DT_AGENDAMENTO.slice(11, 16) : "", "Telefone do agendamento":x.TELEFONE_AGENDAMENTO,
-      "Entrou no mailing":x.DT_ENTRADA_MAILING ? fDiaAno(x.DT_ENTRADA_MAILING) : "", "1ª discagem":x.DT_PRIMEIRA_DISCAGEM ? fDiaAno(x.DT_PRIMEIRA_DISCAGEM) : "", "Situação":x.SITUACAO_AGEND }));
+      "Entrou no mailing":x.DT_ENTRADA_MAILING ? fDiaAno(x.DT_ENTRADA_MAILING) : "", "1ª discagem":x.DT_PRIMEIRA_DISCAGEM ? fDiaAno(x.DT_PRIMEIRA_DISCAGEM) : "", "Situação":x.SITUACAO_AGEND, "Motivo da pendência":x.MOTIVO_PENDENCIA || "" }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out), "Agendamentos"); XLSX.writeFile(wb, "Rentabilizacao_agendamentos_" + new Date().toISOString().slice(0, 10) + ".xlsx");
   };
   $("#btnRentaXlsx").onclick = () => {
