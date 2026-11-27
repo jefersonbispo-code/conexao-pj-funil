@@ -985,7 +985,7 @@ function renderRenta(){
     if (ix === 1){ /* spin logo abaixo de "Trabalhado discador qualificacao" */
       const sp = l => { const d = l.filter(r => r.DISCADO === 1); return div(d.reduce((s2, r) => s2 + Math.min(r.TENTATIVAS || 0, SPIN_MAX), 0), d.length); };
       const fs = v => isFinite(v) && v ? fDec(v) : '<span style="color:var(--muted)">–</span>';
-      h += '<tr class="aux"><td class="name" title="Discagens da campanha 1010 ÷ contas discadas. Cada conta conta no máximo ' + SPIN_MAX + ' tentativas.">Spin (discagens por conta discada, até ' + SPIN_MAX + ' por conta)</td>'
+      h += '<tr class="aux"><td class="name" title="Discagens ÷ contas discadas.">Spin</td>'
         + meses.map(m => '<td class="num">' + fs(sp(C.filter(r => r.MES_CONTA === m))) + '</td>').join("")
         + '<td class="num tot"><b>' + fs(sp(C)) + '</b></td><td class="num"></td></tr>';
     }
@@ -1041,7 +1041,7 @@ function renderRenta(){
     const disc1 = {}; C.forEach(r => { if (r.DISCADO === 1 && r.DT_PRIMEIRA_DISCAGEM) (disc1[r.DT_PRIMEIRA_DISCAGEM] = disc1[r.DT_PRIMEIRA_DISCAGEM] || []).push(r); });
     const dias = Object.keys(M).concat(Object.keys(disc1)).filter((x, i, a) => a.indexOf(x) === i).sort((a, b) => b.localeCompare(a));
     const T2 = {}; RD2.forEach(([k, , f]) => T2[k] = f ? C.filter(f).length : 0);
-    h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Sem duplicidade: cada conta do balde conta uma vez, no primeiro dia em que chegou à etapa, e o total bate com o funil. Discagens = contas trabalhadas pela primeira vez no dia (discador ou CRM). Spin do dia = tentativas das contas discadas pela primeira vez no dia ÷ essas contas, com no máximo 16 tentativas por conta. Agendamento, recusa, cesta e agendamento em aberto seguem o resultado final da conta, no dia em que ele aconteceu. Só aparecem dias com movimento.</p>'
+    h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Sem duplicidade: cada conta do balde conta uma vez, no primeiro dia em que chegou à etapa, e o total bate com o funil. Discagens = contas trabalhadas pela primeira vez no dia (discador ou CRM). Spin do dia = tentativas das contas discadas pela primeira vez no dia ÷ essas contas. Agendamento, recusa, cesta e agendamento em aberto seguem o resultado final da conta, no dia em que ele aconteceu. Só aparecem dias com movimento.</p>'
       + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + RD2.map(c => '<th class="num">' + esc(c[1]) + '</th>').join("") + '</tr></thead><tbody>'
       + '<tr class="destaque"><td class="name"><b>Total</b></td>' + RD2.map(([k]) => '<td class="num">' + (k === "SPIN" ? fs(spinFunil, 1) : '<b>' + fInt(T2[k]) + '</b>') + '</td>').join("") + '</tr>'
       + dias.map(d => '<tr><td class="name">' + fDia(d) + ' ' + DSEM[dow(d)] + '</td>' + RD2.map(([k]) => '<td class="num">'
@@ -1058,7 +1058,7 @@ function renderRenta(){
   T.SPIN_F = spinFunil;
   /* dia: tentativas que entram no spin (cada conta ate SPIN_MAX no acumulado) / contas com tentativa contada no dia; base antiga sem essas colunas: limita o resultado */
   const spin = d => d === T ? d.SPIN_F : Math.min(div(d.DISCAGENS_SPIN != null ? d.DISCAGENS_SPIN : d.DISCAGENS, d.CNPJS_DISCADOS), SPIN_MAX), cel = (d, k, b) => k === "SPIN" ? (isFinite(spin(d)) && spin(d) ? (b ? '<b>' : '') + fDec(spin(d)) + (b ? '</b>' : '') : '<span style="color:var(--muted)">–</span>') : null;
-  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Entrada de mailing = contas que entraram no mailing da rentabilização pela primeira vez no dia. Demais colunas = contas distintas com a etapa no dia (toda a rentabilização, não só o balde). Só aparecem dias com movimento. Spin do dia = discagens ÷ contas discadas no dia; na linha Total, o spin é o mesmo do funil (discagens acumuladas ÷ contas discadas do balde, cada conta uma vez). O spin considera no máximo 16 tentativas por conta no acumulado: depois da 16ª tentativa, as discagens da conta deixam de entrar.</p>'
+  h += '<div class="card"><h2>Dia a dia</h2><p class="hint" style="margin-top:0">Entrada de mailing = contas que entraram no mailing da rentabilização pela primeira vez no dia. Demais colunas = contas distintas com a etapa no dia (toda a rentabilização, não só o balde). Só aparecem dias com movimento. Spin do dia = discagens ÷ contas discadas no dia; na linha Total, o spin é o mesmo do funil (discagens acumuladas ÷ contas discadas do balde, cada conta uma vez).</p>'
     + '<div class="tscroll"><table class="x funil"><thead><tr><th>Dia</th>' + R_DIA.map(([, t]) => '<th class="num">' + esc(t) + '</th>').join("") + '</tr></thead><tbody>'
     + '<tr class="destaque"><td class="name"><b>Total</b></td>' + R_DIA.map(([k]) => '<td class="num">' + (cel(T, k, 1) || '<b>' + fInt(T[k]) + '</b>') + '</td>').join("") + '</tr>'
     + D.map(d => '<tr><td class="name">' + fDia(d.DIA) + ' ' + DSEM[dow(d.DIA)] + '</td>' + R_DIA.map(([k]) => '<td class="num">' + (cel(d, k) || (d[k] ? fInt(d[k]) : '<span style="color:var(--muted)">–</span>')) + '</td>').join("") + '</tr>').join("")
